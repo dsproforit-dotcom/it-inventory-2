@@ -1,10 +1,15 @@
-// 🔴 ჩასვი შენი Google Web App-ის ლინკი!
+// 🔴 შენი Google Web App-ის ლინკი!
 const API_URL = "https://script.google.com/macros/s/AKfycbzwxRy2h0t6Rj7ZqJd3FnFbzsyK9s67SdSOoX1kcl_4ndRYEOmVq-x6J3zbZQwS3gsoxQ/exec";
 
-let currentResults = [];
+// 🔒 1. ვითხოვთ და ვინახავთ PIN კოდს
+let APP_PIN = localStorage.getItem("inventory_pin");
+if (!APP_PIN) {
+  APP_PIN = prompt("🔒 გთხოვთ შეიყვანოთ უსაფრთხოების PIN კოდი (მაგ: 1234):");
+  localStorage.setItem("inventory_pin", APP_PIN);
+}
 
 // =========================================================
-// 🌐 API მესენჯერი (ყველა მოთხოვნას აგზავნის და იღებს)
+// 🌐 API მესენჯერი (რომელიც ახლა პაროლსაც აგზავნის)
 // =========================================================
 async function fetchAPI(actionName, payloadData = {}) {
   try {
@@ -12,13 +17,14 @@ async function fetchAPI(actionName, payloadData = {}) {
       method: 'POST',
       redirect: 'follow',
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ action: actionName, payload: payloadData })
+      // 🔒 2. აქ კონვერტში ვდებთ ჩვენს PIN-საც!
+      body: JSON.stringify({ action: actionName, payload: payloadData, pin: APP_PIN }) 
     });
     const result = await response.json();
     if (!result.success) throw new Error(result.message);
     return result.data;
   } catch (error) {
-    throw new Error("კავშირის შეცდომა: " + error.message);
+    throw new Error("შეცდომა: " + error.message);
   }
 }
 
