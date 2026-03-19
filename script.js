@@ -9,7 +9,7 @@ if (!APP_PIN) {
 }
 
 // =========================================================
-// 🌐 API მესენჯერი (რომელიც ახლა პაროლსაც აგზავნის)
+// 🌐 API მესენჯერი (განახლებული + ჭკვიანი გადატვირთვა)
 // =========================================================
 async function fetchAPI(actionName, payloadData = {}) {
   try {
@@ -17,11 +17,21 @@ async function fetchAPI(actionName, payloadData = {}) {
       method: 'POST',
       redirect: 'follow',
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      // 🔒 2. აქ კონვერტში ვდებთ ჩვენს PIN-საც!
       body: JSON.stringify({ action: actionName, payload: payloadData, pin: APP_PIN }) 
     });
     const result = await response.json();
-    if (!result.success) throw new Error(result.message);
+    
+    // 💡 თუ გუგლმა გვითხრა, რომ ოპერაცია არ გამოვიდა:
+    if (!result.success) {
+      // ვამოწმებთ, ხომ არ არის მიზეზი არასწორი პაროლი
+      if (result.message.includes("PIN")) {
+        localStorage.removeItem("inventory_pin"); // ვშლით ძველ პაროლს
+        alert("🔒 არასწორი ან შეცვლილი პაროლი! გვერდი გადაიტვირთება.");
+        window.location.reload(); // ვტვირთავთ საიტს თავიდან
+      }
+      throw new Error(result.message);
+    }
+    
     return result.data;
   } catch (error) {
     throw new Error("შეცდომა: " + error.message);
