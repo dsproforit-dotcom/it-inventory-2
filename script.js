@@ -255,6 +255,9 @@ function showMessage(text, type) {
 window.addEventListener('click', function(event) {
   if (event.target === document.getElementById('addModal')) closeModal();
   if (event.target === document.getElementById('transferModal')) closeTransferModal();
+  
+  // 📷 თუ დავაკლიკეთ კამერის ფანჯრის გარეთ - ვთიშავთ სკანერს
+  if (event.target === document.getElementById('scannerModal')) stopScanner();
 });
 
 // =========================================================
