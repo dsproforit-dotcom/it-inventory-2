@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="ka">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>IT Inventory System</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body>
+
+<div style="text-align: center; margin-bottom: 10px;">
+  <img src="https://i.ibb.co/LzkKyQFh/logo.png" alt="Logo" style="max-height: 50px;">
+  <h1>IT Inventory System</h1>
+</div>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('dashboard')" id="btn-dashboard">📊 Dashboard</button>
+  <button class="tab-btn" onclick="switchTab('inventory')" id="btn-inventory">📦 Inventory List</button>
+</div>
+
+<div id="view-dashboard" class="tab-content active">
+  <div id="dash-message" class="message loading">⏳ Loading Dashboard Data...</div>
+  <div class="kpi-container" id="kpi-section" style="display:none;">
+    <div class="kpi-card" onclick="switchTab('inventory'); clearFilters(); search();" title="ნახე სრული სია">
+      <div class="kpi-info"><span class="kpi-title">Unique Items</span><span class="kpi-value" id="kpi-unique">0</span></div>
+      <div class="kpi-icon">📋</div>
+    </div>
+    <div class="kpi-card success" onclick="switchTab('inventory'); clearFilters(); search();" title="ნახე სრული სია">
+      <div class="kpi-info"><span class="kpi-title">Total Quantity</span><span class="kpi-value" id="kpi-total">0</span></div>
+      <div class="kpi-icon">📦</div>
+    </div>
+    <div class="kpi-card warning" onclick="filterSpecial('lowStock')" title="ნახე ამოწურული ნივთები">
+      <div class="kpi-info"><span class="kpi-title">Low Stock (≤ 5)</span><span class="kpi-value" id="kpi-low" style="color: #dc3545;">0</span></div>
+      <div class="kpi-icon">⚠️</div>
+    </div>
+  </div>
+  <div class="recent-activity" id="activity-section" style="display:none;">
+    <h3>⏱️ Recent Activity</h3>
+    <div id="activity-list"></div>
+  </div>
+</div>
+
+<div id="view-inventory" class="tab-content">
+  <div class="filter-container">
+    <div class="filter-group">
+      <label>Search</label>
+      <div style="display: flex; gap: 5px;">
+        <div class="input-with-icon" style="flex: 1;">
+          <span class="input-icon">🔍</span>
+          <input type="text" id="search" placeholder="Name or ID..." onkeypress="if(event.key==='Enter') search()">
+        </div>
+        <button onclick="triggerNativeCamera('search')" style="flex: none; min-width: 45px; width: 45px; padding: 0; background: #1a73e8; border-radius: 8px; font-size: 18px; display: flex; align-items: center; justify-content: center;" title="სკანერის ჩართვა">📷</button>
+      </div>
+      <div id="dummy-reader" style="display:none;"></div>
+      <input type="file" id="qr-file-input" accept="image/*" capture="environment" style="display:none;" onchange="processQrImage(event)">
+    </div>
+    <div class="filter-group">
+      <label>Category</label><select id="filterCategory"><option value="ALL">All Categories</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Location</label><select id="filterLocation"><option value="ALL">All Locations</option></select>
+    </div>
+    <div class="filter-group">
+      <label>Show</label>
+      <select id="filterLimit"><option value="20">Last 20</option><option value="50">Last 50</option><option value="100">Last 100</option><option value="ALL">Everything</option></select>
+    </div>
+    <div class="button-group">
+      <button onclick="search()" class="btn-search">🔍 Filter</button>
+      <button onclick="clearFilters()" class="btn-clear">🗑️ Clear</button>
+      <button onclick="downloadCSV()" style="background: #00796b;">📥 CSV Export</button>
+    </div>
+    <div class="button-group">
+      <button onclick="openModal()" class="btn-add">➕ Add Item</button>
+      <button onclick="openTransferModal()" class="btn-transfer">🔄 Action</button>
+      <button onclick="loadHistory()" style="background: #6f42c1;">📜 History</button>
+    </div>
+  </div>
+
+  <div id="message" class="message" style="display:none;"></div>
+
+  <div class="table-container">
+    <table>
+      <thead id="tableHead">
+        <tr>
+          <th>ID</th><th onclick="sortTable(2)" style="cursor:pointer">Name ↕️</th><th onclick="sortTable(3)" style="cursor:pointer">Category ↕️</th><th onclick="sortTable(4)" style="cursor:pointer">Qty ↕️</th><th onclick="sortTable(5)" style="cursor:pointer">Location ↕️</th><th>Warranty</th><th>Pic</th><th>Note</th><th>Action</th>
+        </tr>
+      </thead>
+      <tbody id="resultsBody">
+        <tr><td colspan="9" style="text-align: center;">Press Filter to load items</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div id="addModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header"><h2>➕ Add New Item</h2><span class="close" onclick="closeModal()">&times;</span></div>
+    <div class="form-group"><label>Name *</label><input type="text" id="addName" required placeholder="e.g. Cisco Switch"></div>
+    <div style="display: flex; gap: 15px;">
+      <div class="form-group" style="flex: 1;"><label>Category *</label><select id="addCategory"></select></div>
+      <div class="form-group" style="flex: 1;"><label>Quantity *</label><input type="number" id="addQty" required min="1"></div>
+    </div>
+    <div style="display: flex; gap: 15px;">
+      <div class="form-group" style="flex: 1;"><label>Location *</label><select id="addLocation"></select></div>
+      <div class="form-group" style="flex: 1;"><label>Warranty</label><input type="date" id="addWarranty"></div>
+    </div>
+    <div class="form-group"><label>Picture URL</label><input type="text" id="addPic" placeholder="https://..."></div>
+    <div class="form-group"><label>Notes</label><textarea id="addNotes" placeholder="Additional details..."></textarea></div>
+    <button class="btn-submit" onclick="submitNewItem()" id="submitBtn">Save Item</button>
+  </div>
+</div>
+
+<div id="transferModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header"><h2>🔄 Action</h2><span class="close" onclick="closeTransferModal()">&times;</span></div>
+    <div style="display: flex; gap: 15px;">
+      <div class="form-group" style="flex: 2;">
+        <label>Item ID *</label>
+        <div style="display: flex; gap: 5px;">
+          <div class="input-with-icon" style="flex: 1;">
+            <span class="input-icon">🆔</span><input type="text" id="transItemId" required placeholder="e.g. ITM-ABC">
+          </div>
+          <button type="button" onclick="triggerNativeCamera('transItemId')" style="flex: none; min-width: 45px; width: 45px; padding: 0; background: #1a73e8; border-radius: 8px; font-size: 18px; display: flex; align-items: center; justify-content: center;" title="სკანერის ჩართვა">📷</button>
+        </div>
+      </div>
+      <div class="form-group" style="flex: 1;"><label>Qty *</label><input type="number" id="transQty" required min="1"></div>
+    </div>
+    <div style="display: flex; gap: 15px;">
+      <div class="form-group" style="flex: 1;"><label>Action</label>
+        <select id="transAction" onchange="toggleToLocation()">
+          <option value="TRANSFER">TRANSFER</option><option value="ISSUE">ISSUE</option><option value="WRITE-OFF">WRITE-OFF</option><option value="RESTOCK">RESTOCK</option>
+        </select>
+      </div>
+      <div class="form-group" style="flex: 1;"><label>Responsible</label><input type="text" id="transResp"></div>
+    </div>
+    <div style="display: flex; gap: 15px;">
+      <div class="form-group" style="flex: 1;"><label id="lblFromLoc">From Location *</label><select id="transFromLoc"></select></div>
+      <div class="form-group" id="toLocContainer" style="flex: 1;"><label>To Location *</label><select id="transToLoc"></select></div>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea id="transNotes" placeholder="Reason..."></textarea></div>
+    <button class="btn-submit" onclick="submitTransfer()" id="btnTransSubmit" style="background: #fd7e14;">Execute Action</button>
+  </div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
