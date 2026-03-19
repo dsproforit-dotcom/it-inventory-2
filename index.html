@@ -52,8 +52,6 @@
         </div>
         <button onclick="startScanner('search')" style="flex: none; min-width: 45px; width: 45px; padding: 0; background: #1a73e8; border-radius: 8px; font-size: 18px; display: flex; align-items: center; justify-content: center;" title="სკანერის ჩართვა">📷</button>
       </div>
-      <div id="dummy-reader" style="display:none;"></div>
-      <input type="file" id="qr-file-input" accept="image/*" capture="environment" style="display:none;" onchange="processQrImage(event)">
     </div>
     <div class="filter-group">
       <label>Category</label><select id="filterCategory"><option value="ALL">All Categories</option></select>
@@ -145,7 +143,7 @@
 
 <script src="script.js"></script>
 
-<div id="scannerModal" class="modal" style="z-index: 2000;">
+<div id="scannerModal" class="modal" style="z-index: 2000;" onclick="checkScannerClick(event)">
   <div class="modal-content" style="text-align: center; padding: 20px;">
     <h3 style="margin-top:0;">📷 QR 📷</h3>
     <div id="qr-reader" style="width: 100%; max-width: 300px; margin: 0 auto 15px auto; border-radius: 8px; overflow: hidden;"></div>

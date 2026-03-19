@@ -261,7 +261,7 @@ window.addEventListener('click', function(event) {
 });
 
 // =========================================================
-// 📷 LIVE SCANNER (ნამდვილი ვიდეო-სკანერი)
+// 📷 LIVE SCANNER (ვიდეო-სკანერის მართვა)
 // =========================================================
 let html5QrCode;
 let isScannerRunning = false;
@@ -274,31 +274,36 @@ function startScanner(targetInputId) {
   }
 
   html5QrCode.start(
-    { facingMode: "environment" }, // უპირატესობა უკანა კამერას
+    { facingMode: "environment" },
     { fps: 15, qrbox: { width: 250, height: 250 } },
     (decodedText) => {
-      // 🎯 დაიჭირა კოდი!
       document.getElementById(targetInputId).value = decodedText;
       stopScanner();
-      if (targetInputId === 'search') search(); // ეგრევე ვფილტრავთ
+      if (targetInputId === 'search') search();
     },
-    (errorMessage) => {
-      // უბრალოდ ელოდება კოდს
-    }
+    (errorMessage) => { /* მოლოდინი */ }
   ).then(() => {
     isScannerRunning = true;
   }).catch(err => {
-    alert("კამერის ჩართვა ვერ მოხერხდა! გთხოვთ, მიეცით ბრაუზერს კამერის გამოყენების ნებართვა.");
+    alert("კამერის ჩართვა ვერ მოხერხდა!");
     stopScanner();
   });
 }
 
+// 1. თიშავს კამერას
 function stopScanner() {
   document.getElementById('scannerModal').style.display = 'none';
   if (html5QrCode && isScannerRunning) {
     html5QrCode.stop().then(() => {
       isScannerRunning = false;
     }).catch(err => console.log(err));
+  }
+}
+
+// 2. ხურავს გვერდზე დაჭერისას (ეს ფუნქცია index.html-ში onclick-ზე გვაქვს მიბმული)
+function checkScannerClick(e) {
+  if (e.target.id === 'scannerModal') {
+    stopScanner();
   }
 }
 
