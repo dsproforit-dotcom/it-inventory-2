@@ -50,7 +50,7 @@
           <span class="input-icon">🔍</span>
           <input type="text" id="search" placeholder="Name or ID..." onkeypress="if(event.key==='Enter') search()">
         </div>
-        <button onclick="triggerNativeCamera('search')" style="flex: none; min-width: 45px; width: 45px; padding: 0; background: #1a73e8; border-radius: 8px; font-size: 18px; display: flex; align-items: center; justify-content: center;" title="სკანერის ჩართვა">📷</button>
+        <button onclick="startScanner('search')" style="flex: none; min-width: 45px; width: 45px; padding: 0; background: #1a73e8; border-radius: 8px; font-size: 18px; display: flex; align-items: center; justify-content: center;" title="სკანერის ჩართვა">📷</button>
       </div>
       <div id="dummy-reader" style="display:none;"></div>
       <input type="file" id="qr-file-input" accept="image/*" capture="environment" style="display:none;" onchange="processQrImage(event)">
@@ -121,7 +121,7 @@
           <div class="input-with-icon" style="flex: 1;">
             <span class="input-icon">🆔</span><input type="text" id="transItemId" required placeholder="e.g. ITM-ABC">
           </div>
-          <button type="button" onclick="triggerNativeCamera('transItemId')" style="flex: none; min-width: 45px; width: 45px; padding: 0; background: #1a73e8; border-radius: 8px; font-size: 18px; display: flex; align-items: center; justify-content: center;" title="სკანერის ჩართვა">📷</button>
+          <button type="button" onclick="startScanner('transItemId')" style="flex: none; min-width: 45px; width: 45px; padding: 0; background: #1a73e8; border-radius: 8px; font-size: 18px; display: flex; align-items: center; justify-content: center;" title="სკანერის ჩართვა">📷</button>
         </div>
       </div>
       <div class="form-group" style="flex: 1;"><label>Qty *</label><input type="number" id="transQty" required min="1"></div>
@@ -144,5 +144,13 @@
 </div>
 
 <script src="script.js"></script>
+
+<div id="scannerModal" class="modal" style="z-index: 2000;">
+  <div class="modal-content" style="text-align: center; padding: 20px;">
+    <h3 style="margin-top:0;">📷 დაასკანერეთ QR</h3>
+    <div id="qr-reader" style="width: 100%; max-width: 300px; margin: 0 auto 15px auto; border-radius: 8px; overflow: hidden;"></div>
+    <button type="button" onclick="stopScanner()" style="background: #dc3545; width: 100%; padding: 12px; border-radius: 8px; color: white; border: none; font-size: 16px;">გაუქმება (Close)</button>
+  </div>
+</div>
 </body>
 </html>

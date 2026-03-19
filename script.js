@@ -242,34 +242,45 @@ window.addEventListener('click', function(event) {
 });
 
 // =========================================================
-// 📷 NATIVE SCANNER (ტელეფონის კამერისთვის)
+// 📷 LIVE SCANNER (ნამდვილი ვიდეო-სკანერი)
 // =========================================================
-let currentTargetInput = '';
-function triggerNativeCamera(targetId) {
-  currentTargetInput = targetId;
-  document.getElementById('qr-file-input').click();
+let html5QrCode;
+let isScannerRunning = false;
+
+function startScanner(targetInputId) {
+  document.getElementById('scannerModal').style.display = 'block';
+  
+  if (!html5QrCode) {
+    html5QrCode = new Html5Qrcode("qr-reader");
+  }
+
+  html5QrCode.start(
+    { facingMode: "environment" }, // უპირატესობა უკანა კამერას
+    { fps: 15, qrbox: { width: 250, height: 250 } },
+    (decodedText) => {
+      // 🎯 დაიჭირა კოდი!
+      document.getElementById(targetInputId).value = decodedText;
+      stopScanner();
+      if (targetInputId === 'search') search(); // ეგრევე ვფილტრავთ
+    },
+    (errorMessage) => {
+      // უბრალოდ ელოდება კოდს
+    }
+  ).then(() => {
+    isScannerRunning = true;
+  }).catch(err => {
+    alert("კამერის ჩართვა ვერ მოხერხდა! გთხოვთ, მიეცით ბრაუზერს კამერის გამოყენების ნებართვა.");
+    stopScanner();
+  });
 }
 
-function processQrImage(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-
-  const inputField = document.getElementById(currentTargetInput);
-  inputField.value = "⏳ ვკითხულობ...";
-
-  const html5QrCode = new Html5Qrcode("dummy-reader");
-  const scanOptions = { useBarCodeDetectorIfSupported: true, tryHarder: true };
-
-  html5QrCode.scanFileV2(file, scanOptions)
-    .then(decodedResult => {
-      inputField.value = decodedResult.decodedText; 
-      if (currentTargetInput === 'search') search();
-    })
-    .catch(err => {
-      inputField.value = "";
-      alert("QR კოდი ვერ აღვიქვი. მიიტანეთ კამერა უფრო ახლოს და დაელოდეთ ფოკუსს.");
-    });
-  event.target.value = '';
+function stopScanner() {
+  document.getElementById('scannerModal').style.display = 'none';
+  if (html5QrCode && isScannerRunning) {
+    html5QrCode.stop().then(() => {
+      isScannerRunning = false;
+    }).catch(err => console.log(err));
+  }
 }
 
 // CSV Export
