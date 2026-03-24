@@ -146,25 +146,39 @@ function search() {
   const q = document.getElementById('search').value.toLowerCase().trim();
   const cat = document.getElementById('filterCategory').value;
   const loc = document.getElementById('filterLocation').value;
-  const limit = document.getElementById('filterLimit').value;
+  const dateFilter = document.getElementById('filterDate').value; // ვიჭერთ დროის ფილტრს
 
-  // 💡 Smart Search: ვშლით სიტყვებს სფეისებით
+  // ვშლით ჩაწერილ ტექსტს სიტყვებად (სფეისებით)
   const searchTerms = q.split(' ').filter(term => term.length > 0);
 
+  // ვამზადებთ დროის საზღვრებს ფილტრაციისთვის
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const weekStart = new Date(todayStart); weekStart.setDate(weekStart.getDate() - 7);
+  const monthStart = new Date(todayStart); monthStart.setMonth(monthStart.getMonth() - 1);
+
   let results = fullInventoryData.filter(row => {
-    const rowStr = row.join(' ').toLowerCase();
+    // 💡 ვაერთიანებთ მხოლოდ საძიებო ველებს: 1(ID), 2(Name), 3(Category), 5(Location), 8(Note)
+    // აღარ ვურევთ 0(Date) და 7(Picture) ველებს, რომ შემთხვევითი ტექსტები არ იპოვოს
+    const searchableText = [row[1], row[2], row[3], row[5], row[8]].join(' ').toLowerCase();
     
-    // ამოწმებს, ყველა ჩაწერილი სიტყვა მოიძებნა თუ არა ამ რიგში
-    const matchQ = searchTerms.every(term => rowStr.includes(term));
+    // ამოწმებს, ჩაწერილი ყველა სიტყვა მოიძებნა თუ არა ჩვენს searchableText-ში
+    const matchQ = searchTerms.every(term => searchableText.includes(term));
     const matchCat = (cat === 'ALL') ? true : (row[3] === cat);
     const matchLoc = (loc === 'ALL') ? true : (row[5] === loc);
     
-    return matchQ && matchCat && matchLoc;
+    // დროის ფილტრის ლოგიკა (უყურებს row[0]-ს, სადაც თარიღი წერია)
+    let matchDate = true;
+    if (dateFilter !== 'ALL') {
+      const rowDate = new Date(row[0]);
+      if (dateFilter === 'TODAY') matchDate = rowDate >= todayStart;
+      else if (dateFilter === 'WEEK') matchDate = rowDate >= weekStart;
+      else if (dateFilter === 'MONTH') matchDate = rowDate >= monthStart;
+    }
+    
+    // ნივთი გამოჩნდება მხოლოდ მაშინ, თუ ოთხივე პირობას აკმაყოფილებს
+    return matchQ && matchCat && matchLoc && matchDate;
   });
-
-  if (limit !== 'ALL') {
-    results = results.slice(0, parseInt(limit));
-  }
 
   displayResults(results);
 }

@@ -61,7 +61,15 @@
     </div>
     <div class="filter-group">
       <label>Show</label>
-      <select id="filterLimit"><option value="20">Last 20</option><option value="50">Last 50</option><option value="100">Last 100</option><option value="ALL">Everything</option></select>
+      <div class="filter-group">
+      <label>Date Added</label>
+      <select id="filterDate">
+        <option value="ALL">All Time</option>
+        <option value="TODAY">Today</option>
+        <option value="WEEK">This Week</option>
+        <option value="MONTH">This Month</option>
+      </select>
+    </div>
     </div>
     <div class="button-group">
       <button onclick="search()" class="btn-search">🔍 Filter</button>
