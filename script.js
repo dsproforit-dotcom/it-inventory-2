@@ -82,7 +82,11 @@ async function loadDashboardData() {
     actHtml += '<thead><tr><th>Date</th><th>Action</th><th>Item</th><th>Qty</th><th>Route</th><th>Note</th></tr></thead><tbody>';
     
     data.recentHistory.forEach(r => {
-      let route = (r.action === 'ADD' || r.action === 'RESTOCK') ? `➔ ${r.to}` : (r.action === 'TRANSFER' ? `${r.from} ➔ ${r.to}` : `From: ${r.from}`);
+      let route = "";
+      if (r.action === 'ADD' || r.action === 'RESTOCK') route = `➔ ${r.to}`;
+      else if (r.action === 'TRANSFER') route = `${r.from} ➔ ${r.to}`;
+      else if (r.action === 'UPDATE') route = `At: ${r.from}`; // 👈 UPDATE-სთვის ვაჩვენებთ სადაა
+      else route = `From: ${r.from}`;
       actHtml += `
         <tr>
           <td data-label="Date" style="color: #7f8c8d; font-size: 13px;">${r.date}</td>
@@ -147,20 +151,71 @@ async function runSearch(filters) {
   }
 }
 
+// =========================================================
+// 📜 HISTORY & SEARCH LOGIC
+// =========================================================
+let fullHistoryData = []; // ვიმახსოვრებთ სრულ ისტორიას სწრაფი ძებნისთვის
+
 async function loadHistory() {
-  const messageDiv = document.getElementById('message'); messageDiv.style.display = 'block'; messageDiv.className = 'message loading'; messageDiv.innerHTML = '⌛ Loading History...';
+  const messageDiv = document.getElementById('message'); 
+  messageDiv.style.display = 'block'; 
+  messageDiv.className = 'message loading'; 
+  messageDiv.innerHTML = '⌛ Loading History...';
+  
   try {
     const historyData = await fetchAPI("GET_HISTORY");
-    currentResults = historyData; 
-    messageDiv.innerHTML = '📜 Last 100 Actions'; messageDiv.className = 'message success';
-    const tbody = document.getElementById('resultsBody'); const thead = document.getElementById('tableHead');
-    thead.innerHTML = `<tr><th>Date</th><th>Item ID</th><th>Name</th><th>Action</th><th>From</th><th>To</th><th>Qty</th><th>User</th><th>Note</th></tr>`;
-    let html = '';
-    historyData.forEach(row => { html += `<tr><td data-label="Date">${row[0]}</td><td data-label="Item ID"><strong>${row[1]}</strong></td><td data-label="Name">${row[2]}</td><td data-label="Action"><span class="badge ${row[3]}">${row[3]}</span></td><td data-label="From">${row[4]}</td><td data-label="To">${row[5]}</td><td data-label="Qty">${row[6]}</td><td data-label="User">${row[7]}</td><td data-label="Note">${row[8] || '-'}</td></tr>`; });
-    tbody.innerHTML = html;
+    fullHistoryData = historyData; // ვინახავთ ლოკალურად
+    
+    // 💡 ვქმნით ლამაზ საძიებო ველს პირდაპირ ისტორიის თავზე!
+    messageDiv.className = 'message success';
+    messageDiv.innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <span>📜 Last 100 Actions</span>
+        <input type="text" id="historySearch" onkeyup="filterLocalHistory()" placeholder="🔍 მოძებნე ისტორიაში (მაგ: ID, ოთახი...)" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #ccc; outline: none; flex: 1; max-width: 300px; color: black;">
+      </div>
+    `;
+    
+    drawHistoryTable(fullHistoryData);
   } catch (e) {
     displayError(e);
   }
+}
+
+// ⚡ ისტორიის სწრაფი (ლოკალური) ფილტრი
+function filterLocalHistory() {
+  const q = document.getElementById('historySearch').value.toLowerCase();
+  const filteredData = fullHistoryData.filter(row => row.join(' ').toLowerCase().includes(q));
+  drawHistoryTable(filteredData);
+}
+
+// 🎨 ისტორიის ცხრილის დამხატავი
+function drawHistoryTable(data) {
+  currentResults = data; 
+  const tbody = document.getElementById('resultsBody'); 
+  const thead = document.getElementById('tableHead');
+  
+  thead.innerHTML = `<tr><th>Date</th><th>Item ID</th><th>Name</th><th>Action</th><th>From</th><th>To</th><th>Qty</th><th>User</th><th>Note</th></tr>`;
+  
+  if (data.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">🔍 ისტორიაში ვერაფერი მოიძებნა</td></tr>';
+    return;
+  }
+
+  let html = '';
+  data.forEach(row => { 
+    html += `<tr>
+      <td data-label="Date">${row[0]}</td>
+      <td data-label="Item ID"><strong>${row[1]}</strong></td>
+      <td data-label="Name">${row[2]}</td>
+      <td data-label="Action"><span class="badge ${row[3]}">${row[3]}</span></td>
+      <td data-label="From">${row[4]}</td>
+      <td data-label="To">${row[5]}</td>
+      <td data-label="Qty">${row[6]}</td>
+      <td data-label="User">${row[7]}</td>
+      <td data-label="Note">${row[8] || '-'}</td>
+    </tr>`; 
+  });
+  tbody.innerHTML = html;
 }
 
 function displayResults(results) {
