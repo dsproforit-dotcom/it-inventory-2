@@ -199,7 +199,7 @@ async function loadHistory() {
     messageDiv.className = 'message success';
     messageDiv.innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-        <span>📜 Last 100 Actions</span>
+        <span>📜</span>
         <input type="text" id="historySearch" onkeyup="filterLocalHistory()" placeholder="🔍 მოძებნე ისტორიაში (მაგ: ID, ოთახი...)" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #ccc; outline: none; flex: 1; max-width: 300px; color: black;">
       </div>
     `;
