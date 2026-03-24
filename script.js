@@ -381,3 +381,20 @@ function downloadCSV() {
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const link = document.createElement("a"); 
   link.setAttribute("href", url); link.setAttribute("download", `Inventory_Export_${new Date().toLocaleDateString()}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link);
 }
+
+function downloadHistoryCSV() {
+  if (!currentHistoryResults || currentHistoryResults.length === 0) return alert("No history data to export!");
+  let csvContent = "\ufeffDate,Item ID,Name,Action,From,To,Qty,User,Note\n";
+  currentHistoryResults.forEach(row => { 
+    let cleanRow = row.map(cell => `"${String(cell).replace(/"/g, '""')}"`); 
+    csvContent += cleanRow.join(",") + "\n"; 
+  });
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); 
+  const url = URL.createObjectURL(blob); 
+  const link = document.createElement("a"); 
+  link.setAttribute("href", url); 
+  link.setAttribute("download", `History_Export_${new Date().toLocaleDateString()}.csv`); 
+  document.body.appendChild(link); 
+  link.click(); 
+  document.body.removeChild(link);
+}
