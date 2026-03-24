@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ka">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -16,22 +16,22 @@
 
 <div class="tabs">
   <button class="tab-btn active" onclick="switchTab('dashboard')" id="btn-dashboard">📊 Dashboard</button>
-  <button class="tab-btn" onclick="switchTab('inventory')" id="btn-inventory">📦 Inventory List</button>
+  <button class="tab-btn" onclick="switchTab('inventory')" id="btn-inventory">📦 Inventory</button>
   <button class="tab-btn" onclick="switchTab('history')" id="btn-history">📜 History</button>
 </div>
 
 <div id="view-dashboard" class="tab-content active">
   <div id="dash-message" class="message loading">⏳ Loading Dashboard Data...</div>
   <div class="kpi-container" id="kpi-section" style="display:none;">
-    <div class="kpi-card" onclick="switchTab('inventory'); clearFilters(); search();" title="ნახე სრული სია">
+    <div class="kpi-card" onclick="switchTab('inventory'); clearFilters(); search();" title="View Full List">
       <div class="kpi-info"><span class="kpi-title">Unique Items</span><span class="kpi-value" id="kpi-unique">0</span></div>
       <div class="kpi-icon">📋</div>
     </div>
-    <div class="kpi-card success" onclick="switchTab('inventory'); clearFilters(); search();" title="ნახე სრული სია">
+    <div class="kpi-card success" onclick="switchTab('inventory'); clearFilters(); search();" title="View Full List">
       <div class="kpi-info"><span class="kpi-title">Total Quantity</span><span class="kpi-value" id="kpi-total">0</span></div>
       <div class="kpi-icon">📦</div>
     </div>
-    <div class="kpi-card warning" onclick="filterSpecial('lowStock')" title="ნახე ამოწურული ნივთები">
+    <div class="kpi-card warning" onclick="filterSpecial('lowStock')" title="View Low Stock">
       <div class="kpi-info"><span class="kpi-title">Low Stock (≤ 5)</span><span class="kpi-value" id="kpi-low" style="color: #dc3545;">0</span></div>
       <div class="kpi-icon">⚠️</div>
     </div>
@@ -45,13 +45,13 @@
 <div id="view-inventory" class="tab-content">
   <div class="filter-container">
     <div class="filter-group">
-      <label>Search</label>
+      <label>Search Inventory</label>
       <div style="display: flex; gap: 5px;">
         <div class="input-with-icon" style="flex: 1;">
           <span class="input-icon">🔍</span>
           <input type="text" id="search" placeholder="Name, ID or Keyword..." onkeyup="search()">
         </div>
-        <button onclick="startScanner('search')" style="flex: none; min-width: 45px; width: 45px; padding: 0; background: #1a73e8; border-radius: 8px; font-size: 18px; display: flex; align-items: center; justify-content: center;" title="სკანერის ჩართვა">📷</button>
+        <button onclick="startScanner('search')" style="flex: none; min-width: 45px; width: 45px; height: 42px; padding: 0; background: #1a73e8; border-radius: 8px; font-size: 18px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;" title="Scan QR">🔳</button>
       </div>
     </div>
     <div class="filter-group">
@@ -69,7 +69,6 @@
         <option value="MONTH">This Month</option>
       </select>
     </div>
-    </div>
     <div class="button-group">
       <button onclick="search()" class="btn-search">🔍 Filter</button>
       <button onclick="clearFilters()" class="btn-clear">🗑️ Clear</button>
@@ -81,13 +80,30 @@
     </div>
   </div>
 
+  <div id="message" class="message" style="display:none;"></div>
+
+  <div class="table-container">
+    <table>
+      <thead id="tableHead">
+        <tr><th>ID</th><th onclick="sortTable(2)" style="cursor:pointer">Name ↕️</th><th onclick="sortTable(3)" style="cursor:pointer">Category ↕️</th><th onclick="sortTable(4)" style="cursor:pointer">Qty ↕️</th><th onclick="sortTable(5)" style="cursor:pointer">Location ↕️</th><th>Warranty</th><th>Pic</th><th>Note</th><th>Action</th></tr>
+      </thead>
+      <tbody id="resultsBody">
+        <tr><td colspan="9" style="text-align: center;">Loading items...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
 <div id="view-history" class="tab-content">
   <div class="filter-container">
     <div class="filter-group">
       <label>Search History</label>
-      <div class="input-with-icon">
-        <span class="input-icon">🔍</span>
-        <input type="text" id="historySearch" placeholder="Keywords, ID, User..." onkeyup="searchHistory()">
+      <div style="display: flex; gap: 5px;">
+        <div class="input-with-icon" style="flex: 1;">
+          <span class="input-icon">🔍</span>
+          <input type="text" id="historySearch" placeholder="Keywords, ID, User..." onkeyup="searchHistory()">
+        </div>
+        <button onclick="startScanner('historySearch')" style="flex: none; min-width: 45px; width: 45px; height: 42px; padding: 0; background: #6f42c1; border-radius: 8px; font-size: 18px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;" title="Scan QR">🔳</button>
       </div>
     </div>
     <div class="filter-group">
@@ -112,7 +128,7 @@
       </select>
     </div>
     <div class="button-group">
-      <button onclick="searchHistory()" class="btn-search">🔍 Filter</button>
+      <button onclick="searchHistory()" class="btn-search" style="background: #6f42c1;">🔍 Filter</button>
       <button onclick="clearHistoryFilters()" class="btn-clear">🗑️ Clear</button>
       <button onclick="downloadHistoryCSV()" style="background: #00796b;">📥 CSV Export</button>
     </div>
@@ -130,26 +146,9 @@
   </div>
 </div>
 
-  <div id="message" class="message" style="display:none;"></div>
-
-  <div class="table-container">
-    <table>
-      <thead id="tableHead">
-        <tr>
-          <th>ID</th><th onclick="sortTable(2)" style="cursor:pointer">Name ↕️</th><th onclick="sortTable(3)" style="cursor:pointer">Category ↕️</th><th onclick="sortTable(4)" style="cursor:pointer">Qty ↕️</th><th onclick="sortTable(5)" style="cursor:pointer">Location ↕️</th><th>Warranty</th><th>Pic</th><th>Note</th><th>Action</th>
-        </tr>
-      </thead>
-      <tbody id="resultsBody">
-        <tr><td colspan="9" style="text-align: center;">Press Filter to load items</td></tr>
-      </tbody>
-    </table>
-  </div>
-</div>
-
 <div id="addModal" class="modal">
   <div class="modal-content">
     <div class="modal-header"><h2>➕ Add New Item</h2><span class="close" onclick="closeModal()">&times;</span></div>
-    
     <div class="form-group">
       <label>Item ID</label>
       <div style="display: flex; gap: 5px;">
@@ -157,7 +156,7 @@
           <span class="input-icon">🆔</span>
           <input type="text" id="addId" placeholder="blank = auto-generated ID">
         </div>
-        <button type="button" onclick="startScanner('addId')" style="flex: none; min-width: 42px; width: 42px; height: 42px; padding: 0; background: #1a73e8; border-radius: 8px; font-size: 18px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;" title="turn on QR scanner">🔳</button>
+        <button type="button" onclick="startScanner('addId')" style="flex: none; min-width: 42px; width: 42px; height: 42px; padding: 0; background: #1a73e8; border-radius: 8px; font-size: 18px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">🔳</button>
       </div>
     </div>
     <div class="form-group"><label>Name *</label><input type="text" id="addName" required placeholder="e.g. Cisco Switch"></div>
@@ -185,7 +184,7 @@
           <div class="input-with-icon" style="flex: 1;">
             <span class="input-icon">🆔</span><input type="text" id="transItemId" required placeholder="e.g. ITM-ABC">
           </div>
-          <button type="button" onclick="startScanner('transItemId')" style="flex: none; min-width: 45px; width: 45px; padding: 0; background: #1a73e8; border-radius: 8px; font-size: 18px; display: flex; align-items: center; justify-content: center;" title="სკანერის ჩართვა">📷</button>
+          <button type="button" onclick="startScanner('transItemId')" style="flex: none; min-width: 45px; width: 45px; height: 42px; padding: 0; background: #1a73e8; border-radius: 8px; font-size: 18px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">🔳</button>
         </div>
       </div>
       <div class="form-group" style="flex: 1;"><label>Qty *</label><input type="number" id="transQty" required min="1"></div>
@@ -207,14 +206,14 @@
   </div>
 </div>
 
-<script src="script.js"></script>
-
 <div id="scannerModal" class="modal" style="z-index: 2000;" onclick="checkScannerClick(event)">
   <div class="modal-content" style="text-align: center; padding: 20px;">
-    <h3 style="margin-top:0;">📷 QR 📷</h3>
+    <h3 style="margin-top:0;">📷 QR Scanner</h3>
     <div id="qr-reader" style="width: 100%; max-width: 300px; margin: 0 auto 15px auto; border-radius: 8px; overflow: hidden;"></div>
     <button type="button" onclick="stopScanner()" style="background: #dc3545; width: 100%; padding: 12px; border-radius: 8px; color: white; border: none; font-size: 16px;">Close</button>
   </div>
 </div>
+
+<script src="script.js"></script>
 </body>
 </html>
