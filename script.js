@@ -69,13 +69,18 @@ async function fetchFullInventory() {
 // 📊 DASHBOARD & TABS
 // =========================================================
 function switchTab(tabName) {
-  document.getElementById('view-dashboard').classList.remove('active');
-  document.getElementById('view-inventory').classList.remove('active');
-  document.getElementById('btn-dashboard').classList.remove('active');
-  document.getElementById('btn-inventory').classList.remove('active');
+  // ვთიშავთ ყველას
+  ['dashboard', 'inventory', 'history'].forEach(name => {
+    document.getElementById('view-' + name).classList.remove('active');
+    document.getElementById('btn-' + name).classList.remove('active');
+  });
+  // ვრთავთ რომელსაც დავაკლიკეთ
   document.getElementById('view-' + tabName).classList.add('active');
   document.getElementById('btn-' + tabName).classList.add('active');
+  
+  // მონაცემების ჩატვირთვა საჭიროებისამებრ
   if(tabName === 'dashboard') loadDashboardData();
+  if(tabName === 'history' && fullHistoryData.length === 0) loadHistoryData();
 }
 
 async function loadDashboardData() {
@@ -185,55 +190,68 @@ function search() {
 // =========================================================
 let fullHistoryData = []; // ვიმახსოვრებთ სრულ ისტორიას სწრაფი ძებნისთვის
 
-async function loadHistory() {
-  const messageDiv = document.getElementById('message'); 
-  messageDiv.style.display = 'block'; 
-  messageDiv.className = 'message loading'; 
-  messageDiv.innerHTML = '⌛ Loading History...';
+// =========================================================
+// 📜 HISTORY TAB LOGIC
+// =========================================================
+let currentHistoryResults = []; // CSV ექსპორტისთვის
+
+async function loadHistoryData() {
+  const tbody = document.getElementById('historyResultsBody');
+  tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;" class="loading">⏳ Fetching Full History Database...</td></tr>';
   
   try {
-    const historyData = await fetchAPI("GET_HISTORY");
-    fullHistoryData = historyData; // ვინახავთ ლოკალურად
-    
-    // 💡 ვქმნით ლამაზ საძიებო ველს პირდაპირ ისტორიის თავზე!
-    messageDiv.className = 'message success';
-    messageDiv.innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-        <span>📜</span>
-        <input type="text" id="historySearch" onkeyup="filterLocalHistory()" placeholder="🔍 მოძებნე ისტორიაში (მაგ: ID, ოთახი...)" style="padding: 6px 10px; border-radius: 6px; border: 1px solid #ccc; outline: none; flex: 1; max-width: 300px; color: black;">
-      </div>
-    `;
-    
-    drawHistoryTable(fullHistoryData);
+    fullHistoryData = await fetchAPI("GET_HISTORY");
+    searchHistory(); // ჩატვირთვისთანავე ვფილტრავთ და ვხატავთ
   } catch (e) {
-    displayError(e);
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: red;">❌ Error: ${e.message}</td></tr>`;
   }
 }
 
-// ⚡ ისტორიის სწრაფი (ლოკალური) ფილტრი
-function filterLocalHistory() {
-  const q = document.getElementById('historySearch').value.toLowerCase();
-  const filteredData = fullHistoryData.filter(row => row.join(' ').toLowerCase().includes(q));
-  drawHistoryTable(filteredData);
+function searchHistory() {
+  const q = document.getElementById('historySearch').value.toLowerCase().trim();
+  const actionType = document.getElementById('historyAction').value;
+  const dateFilter = document.getElementById('historyDate').value;
+
+  const searchTerms = q.split(' ').filter(term => term.length > 0);
+  
+  const now = new Date();
+  const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const weekStart = new Date(todayStart); weekStart.setDate(weekStart.getDate() - 7);
+  const monthStart = new Date(todayStart); monthStart.setMonth(monthStart.getMonth() - 1);
+
+  let results = fullHistoryData.filter(row => {
+    // ვაერთიანებთ ველებს ძებნისთვის (გარდა თარიღისა)
+    const searchableText = row.slice(1).join(' ').toLowerCase();
+    
+    const matchQ = searchTerms.every(term => searchableText.includes(term));
+    const matchAction = (actionType === 'ALL') ? true : (row[3] === actionType);
+    
+    let matchDate = true;
+    if (dateFilter !== 'ALL') {
+      const rowDate = new Date(row[0]);
+      if (dateFilter === 'TODAY') matchDate = rowDate >= todayStart;
+      else if (dateFilter === 'WEEK') matchDate = rowDate >= weekStart;
+      else if (dateFilter === 'MONTH') matchDate = rowDate >= monthStart;
+    }
+    
+    return matchQ && matchAction && matchDate;
+  });
+
+  currentHistoryResults = results; // ვიმახსოვრებთ ექსპორტისთვის
+  drawHistoryTable(results);
 }
 
-// 🎨 ისტორიის ცხრილის დამხატავი
 function drawHistoryTable(data) {
-  currentResults = data; 
-  const tbody = document.getElementById('resultsBody'); 
-  const thead = document.getElementById('tableHead');
-  
-  thead.innerHTML = `<tr><th>Date</th><th>Item ID</th><th>Name</th><th>Action</th><th>From</th><th>To</th><th>Qty</th><th>User</th><th>Note</th></tr>`;
-  
+  const tbody = document.getElementById('historyResultsBody');
   if (data.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">🔍 ისტორიაში ვერაფერი მოიძებნა</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">🔍 No history records found for these filters</td></tr>';
     return;
   }
 
   let html = '';
   data.forEach(row => { 
     html += `<tr>
-      <td data-label="Date">${row[0]}</td>
+      <td data-label="Date" style="font-size:12px; color:#555;">${row[0]}</td>
       <td data-label="Item ID"><strong>${row[1]}</strong></td>
       <td data-label="Name">${row[2]}</td>
       <td data-label="Action"><span class="badge ${row[3]}">${row[3]}</span></td>
@@ -245,6 +263,26 @@ function drawHistoryTable(data) {
     </tr>`; 
   });
   tbody.innerHTML = html;
+}
+
+function clearHistoryFilters() {
+  document.getElementById('historySearch').value = '';
+  document.getElementById('historyAction').value = 'ALL';
+  document.getElementById('historyDate').value = 'ALL';
+  searchHistory();
+}
+
+function downloadHistoryCSV() {
+  if (!currentHistoryResults || currentHistoryResults.length === 0) return alert("No data to export!");
+  let csvContent = "\ufeffDate,Item ID,Name,Action,From,To,Qty,User,Note\n";
+  currentHistoryResults.forEach(row => { 
+    let cleanRow = row.map(cell => `"${String(cell).replace(/"/g, '""')}"`); 
+    csvContent += cleanRow.join(",") + "\n"; 
+  });
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); 
+  const url = URL.createObjectURL(blob); const link = document.createElement("a"); 
+  link.setAttribute("href", url); link.setAttribute("download", `History_Export_${new Date().toLocaleDateString()}.csv`); 
+  document.body.appendChild(link); link.click(); document.body.removeChild(link);
 }
 
 function displayResults(results) {
