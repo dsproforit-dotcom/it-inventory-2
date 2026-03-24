@@ -8,6 +8,7 @@ if (!APP_PIN) {
   localStorage.setItem("inventory_pin", APP_PIN);
 }
 
+let fullInventoryData = []; // ინახავს მთლიან ბაზას ლოკალურად, სწრაფი ძებნისთვის და ოპერაციების შემდეგ განახლებისთვის
 // =========================================================
 // 🌐 API მესენჯერი (განახლებული + ჭკვიანი გადატვირთვა)
 // =========================================================
@@ -46,11 +47,23 @@ window.onload = async function() {
   try {
     const options = await fetchAPI("GET_DROPDOWNS");
     populateDropdowns(options);
-    search();
+    await fetchFullInventory(); // 👈 საიტის ჩართვისთანავე მოაქვს მთლიანი ბაზა
   } catch (e) {
-    console.error("ვერ ჩაიტვირთა Dropdowns", e);
+    console.error("Dropdown loading failed", e);
   }
 };
+
+async function fetchFullInventory() {
+  const messageDiv = document.getElementById('message');
+  messageDiv.style.display = 'block'; messageDiv.className = 'message loading'; 
+  messageDiv.innerText = '⏳ Loading Database...';
+  try {
+    fullInventoryData = await fetchAPI("SEARCH_ITEMS", { query: '', category: 'ALL', location: 'ALL', limit: 'ALL' });
+    search(); // ჩატვირთვის მერე ეგრევე ხატავს
+  } catch(e) {
+    displayError(e);
+  }
+}
 
 // =========================================================
 // 📊 DASHBOARD & TABS
@@ -111,7 +124,7 @@ function filterSpecial(type) {
   switchTab('inventory');
   clearFilters();
   const filters = { query: '', category: 'ALL', location: 'ALL', limit: 'ALL', special: type };
-  runSearch(filters);
+  search(filters);
 }
 
 // =========================================================
@@ -130,26 +143,33 @@ function populateDropdowns(options) {
 }
 
 function search() {
-  const filters = {
-    query: document.getElementById('search').value,
-    category: document.getElementById('filterCategory').value,
-    location: document.getElementById('filterLocation').value,
-    limit: document.getElementById('filterLimit').value
-  };
-  runSearch(filters);
+  const q = document.getElementById('search').value.toLowerCase().trim();
+  const cat = document.getElementById('filterCategory').value;
+  const loc = document.getElementById('filterLocation').value;
+  const limit = document.getElementById('filterLimit').value;
+
+  // 💡 Smart Search: ვშლით სიტყვებს სფეისებით
+  const searchTerms = q.split(' ').filter(term => term.length > 0);
+
+  let results = fullInventoryData.filter(row => {
+    const rowStr = row.join(' ').toLowerCase();
+    
+    // ამოწმებს, ყველა ჩაწერილი სიტყვა მოიძებნა თუ არა ამ რიგში
+    const matchQ = searchTerms.every(term => rowStr.includes(term));
+    const matchCat = (cat === 'ALL') ? true : (row[3] === cat);
+    const matchLoc = (loc === 'ALL') ? true : (row[5] === loc);
+    
+    return matchQ && matchCat && matchLoc;
+  });
+
+  if (limit !== 'ALL') {
+    results = results.slice(0, parseInt(limit));
+  }
+
+  displayResults(results);
 }
 
-async function runSearch(filters) {
-  const messageDiv = document.getElementById('message');
-  messageDiv.style.display = 'block'; messageDiv.className = 'message loading'; messageDiv.innerText = '⏫ Filtering...';
-  
-  try {
-    const results = await fetchAPI("SEARCH_ITEMS", filters);
-    displayResults(results);
-  } catch (e) {
-    displayError(e);
-  }
-}
+
 
 // =========================================================
 // 📜 HISTORY & SEARCH LOGIC
@@ -286,7 +306,7 @@ async function submitNewItem() {
   try {
     const response = await fetchAPI("ADD_ITEM", payload);
     btn.innerText = "Save Item"; btn.disabled = false;
-    closeModal(); showMessage(response.message, 'success'); search(); loadDashboardData();
+    closeModal(); showMessage(response.message, 'success'); fetchFullInventory(); loadDashboardData();
   } catch (e) {
     btn.innerText = "Save Item"; btn.disabled = false; alert("შეცდომა: " + e.message);
   }
@@ -312,7 +332,7 @@ async function submitTransfer() {
   try {
     const response = await fetchAPI("TRANSFER_ITEM", payload);
     btn.innerText = "Execute Action"; btn.disabled = false;
-    closeTransferModal(); showMessage(response.message, 'success'); search(); loadDashboardData();
+    closeTransferModal(); showMessage(response.message, 'success'); fetchFullInventory(); loadDashboardData();
   } catch (e) {
     btn.innerText = "Execute Action"; btn.disabled = false; alert("შეცდომა: " + e.message);
   }
