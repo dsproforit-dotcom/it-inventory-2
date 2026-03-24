@@ -54,16 +54,14 @@
       </div>
     </div>
     <div class="filter-group">
-      <label>Category</label><select id="filterCategory"><option value="ALL">All Categories</option></select>
+      <label>Category</label><select id="filterCategory" onchange="search()"><option value="ALL">All Categories</option></select>
     </div>
     <div class="filter-group">
-      <label>Location</label><select id="filterLocation"><option value="ALL">All Locations</option></select>
+      <label>Location</label><select id="filterLocation" onchange="search()"><option value="ALL">All Locations</option></select>
     </div>
     <div class="filter-group">
-      <label>Show</label>
-      <div class="filter-group">
       <label>Date Added</label>
-      <select id="filterDate">
+      <select id="filterDate" onchange="search()">
         <option value="ALL">All Time</option>
         <option value="TODAY">Today</option>
         <option value="WEEK">This Week</option>
@@ -146,7 +144,7 @@
     <div style="display: flex; gap: 15px;">
       <div class="form-group" style="flex: 1;"><label>Action</label>
         <select id="transAction" onchange="toggleToLocation()">
-          <option value="TRANSFER">TRANSFER</option><option value="ISSUE">ISSUE</option><option value="WRITE-OFF">WRITE-OFF</option><option value="RESTOCK">RESTOCK</option><option value="UPDATE">UPDATE</option> </select>
+          <option value="TRANSFER">TRANSFER</option><option value="ISSUE">ISSUE</option><option value="WRITE-OFF">WRITE-OFF</option><option value="RESTOCK">RESTOCK</option><option value="UPDATE">UPDATE</option>
         </select>
       </div>
       <div class="form-group" style="flex: 1;"><label>Responsible</label><input type="text" id="transResp"></div>

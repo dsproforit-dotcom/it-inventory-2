@@ -120,12 +120,7 @@ async function loadDashboardData() {
   }
 }
 
-function filterSpecial(type) {
-  switchTab('inventory');
-  clearFilters();
-  const filters = { query: '', category: 'ALL', location: 'ALL', limit: 'ALL', special: type };
-  search(filters);
-}
+
 
 // =========================================================
 // 🔍 SEARCH & INVENTORY
@@ -275,9 +270,27 @@ function displayResults(results) {
 }
 
 function clearFilters() {
-  document.getElementById('search').value = ''; document.getElementById('filterCategory').value = 'ALL'; document.getElementById('filterLocation').value = 'ALL'; document.getElementById('filterLimit').value = '20';
-  document.getElementById('resultsBody').innerHTML = '<tr><td colspan="9" style="text-align: center;">შედეგები გასუფთავებულია 📝</td></tr>';
-  document.getElementById('message').style.display = 'none'; currentResults = [];
+  document.getElementById('search').value = ''; 
+  document.getElementById('filterCategory').value = 'ALL'; 
+  document.getElementById('filterLocation').value = 'ALL'; 
+  document.getElementById('filterDate').value = 'ALL'; // 👈 აქ Limit-ის მაგივრად ახლა Date წერია
+  
+  document.getElementById('resultsBody').innerHTML = '<tr><td colspan="9" style="text-align: center;">Filters cleared 📝</td></tr>';
+  document.getElementById('message').style.display = 'none'; 
+  currentResults = [];
+}
+
+function filterSpecial(type) {
+  switchTab('inventory');
+  clearFilters();
+  
+  let results = fullInventoryData;
+  // ლოგიკა: ამოწურული ნივთების (Low Stock) სწრაფი გაფილტვრა ლოკალურად
+  if (type === 'lowStock') {
+    results = fullInventoryData.filter(row => row[3] === 'Consumables' && Number(row[4]) > 0 && Number(row[4]) <= 5);
+  }
+  
+  displayResults(results);
 }
 
 function displayError(e) { document.getElementById('message').innerText = '❌ Error: ' + e.message; document.getElementById('message').className = 'message error'; document.getElementById('message').style.display = 'block'; }
