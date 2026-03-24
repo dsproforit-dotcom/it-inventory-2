@@ -167,7 +167,7 @@ function addNewItem(data) {
  */
 
 function transferItem(data) {
-  const ss = SpreadsheetApp.getActive();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
   const db = ss.getSheetByName(DB_SHEET);
   const lock = LockService.getScriptLock();
 
@@ -175,10 +175,10 @@ function transferItem(data) {
     lock.waitLock(30000);
     
     const itemId = data.itemId;
-    const action = data.action.toUpperCase(); // TRANSFER, ISSUE, ან WRITE-OFF
+    const action = data.action.toUpperCase(); // TRANSFER, ISSUE, WRITE-OFF, RESTOCK ან UPDATE
     const qty = Number(data.qty);
     const fromLoc = data.fromLoc;
-    const toLoc = (action === 'TRANSFER') ? data.toLoc : 'N/A'; // თუ ჩამოწერაა, მიმღები ლოკაცია არ გვაქვს
+    const toLoc = (action === 'TRANSFER') ? data.toLoc : 'N/A';
     const resp = data.resp || 'UNKNOWN';
     const note = data.note || '';
 
@@ -186,35 +186,42 @@ function transferItem(data) {
     let sourceRow = -1;
     let targetRow = -1;
 
-    // ვეძებთ ნივთს მხოლოდ გამგზავნ ლოკაციაზე
+    // ვეძებთ ნივთს გამგზავნ ლოკაციაზე
     for (let i = 1; i < dbValues.length; i++) {
       if (dbValues[i][1] === itemId && dbValues[i][5] === fromLoc) sourceRow = i;
-      // სამიზნე ლოკაციას ვეძებთ მხოლოდ მაშინ, თუ ტრანსფერია
       if (action === 'TRANSFER' && dbValues[i][1] === itemId && dbValues[i][5] === toLoc) targetRow = i;
     }
 
     if (sourceRow === -1) {
       logError(itemId, fromLoc, toLoc, qty, resp, 'Source not found');
-      return { success: false, message: "შეცდომა: ნივთი მითითებულ ლოკაციაზე (" + fromLoc + ") არ მოიძებნა!" };
+      return { success: false, message: "შეცდომა: ნივთი ლოკაციაზე (" + fromLoc + ") არ მოიძებნა!" };
     }
 
     let itemName = dbValues[sourceRow][2]; 
     const currentQty = Number(dbValues[sourceRow][4]);
 
-    // 🔴 აი, ახალი ლოგიკა: თუ მარაგს ვავსებთ (RESTOCK)
+    // 🔴 ახალი: თუ უბრალოდ ვაფდეითებთ (UPDATE)
+    if (action === 'UPDATE') {
+      db.getRange(sourceRow + 1, 9).setValue(note); // ვაახლებთ მხოლოდ Notes (I სვეტი)
+      logHistory('UPDATE', itemId, itemName, fromLoc, fromLoc, 0, resp, note);
+      return { success: true, message: `✅ ნივთის ინფორმაცია განახლდა!` };
+    }
+
+    // 🔴 თუ მარაგს ვავსებთ (RESTOCK)
     if (action === 'RESTOCK') {
-      db.getRange(sourceRow + 1, 5).setValue(currentQty + qty); // ვუმატებთ არსებულ რაოდენობას
+      db.getRange(sourceRow + 1, 5).setValue(currentQty + qty); 
+      // შეგვიძლია ნოუთიც განვაახლოთ დამატებისას
+      if(note) db.getRange(sourceRow + 1, 9).setValue(note);
       logHistory('RESTOCK', itemId, itemName, 'SUPPLIER/NEW', fromLoc, qty, resp, note);
-      return { success: true, message: `✅ მარაგი წარმატებით შეივსო (${qty} ცალი დაემატა)!` };
+      return { success: true, message: `✅ მარაგი წარმატებით შეივსო (${qty} ცალი)!` };
     }
 
     // ძველი ლოგიკა დანარჩენი მოქმედებებისთვის (რომლებიც აკლებენ)
     if (qty > currentQty) {
-      logError(itemId, fromLoc, toLoc, qty, resp, 'Insufficient stock');
       return { success: false, message: "შეცდომა: მარაგში არ არის საკმარისი რაოდენობა! (ხელმისაწვდომია: " + currentQty + ")" };
     }
 
-    // 1. თუ ტრანსფერია, ჯერ მიმღებთან ვამატებთ (რომ რიგები არ აგვერიოს)
+    // 1. თუ ტრანსფერია, ჯერ მიმღებთან ვამატებთ
     if (action === 'TRANSFER') {
       if (targetRow !== -1) {
         const targetQty = Number(dbValues[targetRow][4]);
@@ -228,14 +235,12 @@ function transferItem(data) {
       }
     }
 
-    // 2. გამოკლება ან წაშლა საწყისი ლოკაციიდან (ეს ეხება სამივეს: Transfer, Issue, Write-off)
+    // 2. გამოკლება საწყისი ლოკაციიდან (Transfer, Issue, Write-off)
     const remainingQty = currentQty - qty;
     if (remainingQty === 0) {
-      // თუ ნული დარჩა, მთლიანად ვშლით ხაზს ბაზიდან!
-      db.deleteRow(sourceRow + 1);
+      db.deleteRow(sourceRow + 1); // ნული დარჩა - ვშლით
     } else {
-      // თუ კიდევ დარჩა რაღაც რაოდენობა, უბრალოდ ვაკლებთ
-      db.getRange(sourceRow + 1, 5).setValue(remainingQty);
+      db.getRange(sourceRow + 1, 5).setValue(remainingQty); // უბრალოდ ვაკლებთ
     }
 
     // 3. ისტორიაში ჩაწერა
@@ -245,7 +250,6 @@ function transferItem(data) {
     return { success: true, message: `✅ ოპერაცია (${action}) წარმატებით შესრულდა!` };
 
   } catch (err) {
-    logError(data.itemId, data.fromLoc, data.toLoc, data.qty, data.resp, err.message);
     return { success: false, message: "სისტემური შეცდომა: " + err.message };
   } finally {
     lock.releaseLock();
