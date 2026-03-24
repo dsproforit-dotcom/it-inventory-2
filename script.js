@@ -208,9 +208,24 @@ function openModal() { document.getElementById('addModal').style.display = 'bloc
 function closeModal() { document.getElementById('addModal').style.display = 'none'; ['addName', 'addQty', 'addWarranty', 'addPic', 'addNotes'].forEach(id => document.getElementById(id).value = ''); }
 
 async function submitNewItem() {
-  const btn = document.getElementById('submitBtn'); const name = document.getElementById('addName').value.trim(); const qty = document.getElementById('addQty').value.trim();
+  const btn = document.getElementById('submitBtn'); 
+  const customId = document.getElementById('addId').value.trim(); // 👈 ვიჭერთ ID-ს
+  const name = document.getElementById('addName').value.trim(); 
+  const qty = document.getElementById('addQty').value.trim();
+  
   if(!name || !qty) return alert("გთხოვთ, შეავსოთ Name და Quantity ველები!");
-  const payload = { name: name, category: document.getElementById('addCategory').value, qty: qty, location: document.getElementById('addLocation').value, warranty: document.getElementById('addWarranty').value, pic: document.getElementById('addPic').value, notes: document.getElementById('addNotes').value };
+  
+  // ვამატებთ itemId-ს payload-ში
+  const payload = { 
+    itemId: customId, 
+    name: name, 
+    category: document.getElementById('addCategory').value, 
+    qty: qty, 
+    location: document.getElementById('addLocation').value, 
+    warranty: document.getElementById('addWarranty').value, 
+    pic: document.getElementById('addPic').value, 
+    notes: document.getElementById('addNotes').value 
+  };
   
   btn.innerText = "⏳ Saving..."; btn.disabled = true;
   try {
