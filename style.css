@@ -25,6 +25,11 @@ h1 { color: #1a73e8; text-align: center; margin-bottom: 30px; font-weight: 700; 
   background-color: #17a2b8; /* ლამაზი ფირუზისფერი / Info ფერი */
   color: white;
 }
+.badge.ERROR-LOG { 
+  background-color: #e53935; /* მკვეთრი წითელი ფერი ერორებისთვის */
+  color: white; 
+  border: 1px solid #b71c1c; /* მუქი წითელი კანტი უფრო შესამჩნევად */
+}
 .filter-container { background: white; padding: 20px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; }
 .filter-group { display: flex; flex-direction: column; gap: 8px; }
 .filter-group label { font-size: 12px; font-weight: 700; color: #7f8c8d; text-transform: uppercase; }
