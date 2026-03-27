@@ -196,15 +196,18 @@ function clearFilters() {
 
 function filterSpecial(type) {
   switchTab('inventory');
-  clearFilters();
+  
+  // 🛑 clearFilters()-ის მაგივრად ფილტრებს "ჩუმად" ვასუფთავებთ, რომ ორჯერ არ დახატოს ცხრილი
+  document.getElementById('search').value = ''; 
+  document.getElementById('filterCategory').value = 'ALL'; 
+  document.getElementById('filterLocation').value = 'ALL'; 
+  document.getElementById('filterDate').value = 'ALL'; 
   
   if (type === 'lowStockIT') {
-    // 👈 აქაც > 0 შეიცვალა >= 0
     let results = fullInventoryData.filter(row => row[3] === 'Consumables' && row[5] === 'IT Warehouse' && Number(row[4]) >= 0 && Number(row[4]) <= 3);
     displayResults(results);
   } 
   else if (type === 'lowStockFloor') {
-    // 👈 აქაც > 0 შეიცვალა >= 0
     let results = fullInventoryData.filter(row => row[3] === 'Consumables' && row[5] === "Floor's Cabinet" && Number(row[4]) >= 0 && Number(row[4]) <= 1);
     displayResults(results);
   }
