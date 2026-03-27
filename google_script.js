@@ -254,11 +254,8 @@ function transferItem(data) {
 
     // 2. გამოკლება საწყისი ლოკაციიდან (Transfer, Issue, Write-off)
     const remainingQty = currentQty - qty;
-    if (remainingQty === 0) {
-      db.deleteRow(sourceRow + 1); // ნული დარჩა - ვშლით
-    } else {
-      db.getRange(sourceRow + 1, 5).setValue(remainingQty); // უბრალოდ ვაკლებთ
-    }
+    // 🔴 რიგის წაშლის ლოგიკა ამოვიღეთ. ახლა თუნდაც 0 დარჩეს, უბრალოდ ვააფდეითებთ რიცხვს:
+    db.getRange(sourceRow + 1, 5).setValue(remainingQty);
 
     // 3. ისტორიაში ჩაწერა
     const historyToLoc = (action === 'TRANSFER') ? toLoc : 'REMOVED/CONSUMED';
@@ -299,7 +296,7 @@ function getDashboardData() {
       
       
       // 💡 ამოწურვის პირას მყოფი ნივთების დათვლა ლოკაციების მიხედვით
-      if (category === 'Consumables' && qty > 0) {
+      if (category === 'Consumables' && qty >= 0) { // 👈 აქ შევცვალეთ >= 0
         // IT საწყობში ლიმიტი არის 3
         if (location === 'IT Warehouse' && qty <= 3) {
           lowStockIT++; 
