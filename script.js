@@ -86,7 +86,10 @@ async function loadDashboardData() {
     document.getElementById('dash-message').style.display = 'none';
     document.getElementById('kpi-unique').innerText = data.totalItems;
     document.getElementById('kpi-total').innerText = data.totalQty;
-    document.getElementById('kpi-low').innerText = data.lowStock;
+    
+    // 🔴 აი, ძველი ხაზის მაგივრად ეს ორი ახალი ჩაჯდა აქ:
+    document.getElementById('kpi-low-it').innerText = data.lowStockIT;
+    document.getElementById('kpi-low-floor').innerText = data.lowStockFloor;
     
     const actList = document.getElementById('activity-list');
     let actHtml = '<div class="table-container"><table style="margin:0;">';
@@ -194,8 +197,15 @@ function clearFilters() {
 function filterSpecial(type) {
   switchTab('inventory');
   clearFilters();
-  if (type === 'lowStock') {
-    let results = fullInventoryData.filter(row => row[3] === 'Consumables' && Number(row[4]) > 0 && Number(row[4]) <= 5);
+  
+  if (type === 'lowStockIT') {
+    // ფილტრავს მხოლოდ IT Warehouse-ს
+    let results = fullInventoryData.filter(row => row[3] === 'Consumables' && row[5] === 'IT Warehouse' && Number(row[4]) > 0 && Number(row[4]) <= 5);
+    displayResults(results);
+  } 
+  else if (type === 'lowStockFloor') {
+    // ფილტრავს მხოლოდ Floor's Cabinet-ს
+    let results = fullInventoryData.filter(row => row[3] === 'Consumables' && row[5] === "Floor's Cabinet" && Number(row[4]) > 0 && Number(row[4]) <= 5);
     displayResults(results);
   }
 }
