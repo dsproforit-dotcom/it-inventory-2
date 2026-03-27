@@ -25,7 +25,7 @@ h1 { color: #1a73e8; text-align: center; margin-bottom: 30px; font-weight: 700; 
   background-color: #17a2b8; /* ლამაზი ფირუზისფერი / Info ფერი */
   color: white;
 }
-.badge.ERROR-LOG { 
+.badge.ERROR { 
   background-color: #e53935; /* მკვეთრი წითელი ფერი ერორებისთვის */
   color: white; 
   border: 1px solid #b71c1c; /* მუქი წითელი კანტი უფრო შესამჩნევად */
