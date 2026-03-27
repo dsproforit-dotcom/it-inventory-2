@@ -295,11 +295,15 @@ function getDashboardData() {
     if (!isNaN(qty)) {
       totalQty += qty;
       
+      
       // 💡 ამოწურვის პირას მყოფი ნივთების დათვლა ლოკაციების მიხედვით
-      if (category === 'Consumables' && qty > 0 && qty <= 5) {
-        if (location === 'IT Warehouse') {
+      if (category === 'Consumables' && qty > 0) {
+        // IT საწყობში ლიმიტი არის 3
+        if (location === 'IT Warehouse' && qty <= 3) {
           lowStockIT++; 
-        } else if (location === "Floor's Cabinet") {
+        } 
+        // სართულის კარადაში ლიმიტი არის 1 (ანუ 2-ზე ნაკლები)
+        else if (location === "Floor's Cabinet" && qty <= 1) {
           lowStockFloor++; 
         }
       }

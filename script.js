@@ -199,13 +199,13 @@ function filterSpecial(type) {
   clearFilters();
   
   if (type === 'lowStockIT') {
-    // ფილტრავს მხოლოდ IT Warehouse-ს
-    let results = fullInventoryData.filter(row => row[3] === 'Consumables' && row[5] === 'IT Warehouse' && Number(row[4]) > 0 && Number(row[4]) <= 5);
+    // ფილტრავს IT Warehouse-ს (რაოდენობა 3 ან ნაკლები)
+    let results = fullInventoryData.filter(row => row[3] === 'Consumables' && row[5] === 'IT Warehouse' && Number(row[4]) > 0 && Number(row[4]) <= 3);
     displayResults(results);
   } 
   else if (type === 'lowStockFloor') {
-    // ფილტრავს მხოლოდ Floor's Cabinet-ს
-    let results = fullInventoryData.filter(row => row[3] === 'Consumables' && row[5] === "Floor's Cabinet" && Number(row[4]) > 0 && Number(row[4]) <= 5);
+    // ფილტრავს Floor's Cabinet-ს (რაოდენობა 1)
+    let results = fullInventoryData.filter(row => row[3] === 'Consumables' && row[5] === "Floor's Cabinet" && Number(row[4]) > 0 && Number(row[4]) <= 1);
     displayResults(results);
   }
 }
