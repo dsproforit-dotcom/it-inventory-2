@@ -36,9 +36,11 @@ function searchItems(filters) {
   if (filters.location && filters.location !== 'ALL') results = results.filter(r => r[5] === filters.location);
 
   // --- სპეციალური ფილტრები დაშბორდის კლიკისთვის ---
-  if (filters.special === 'lowStock') {
-    // ვაფილტრავთ მხოლოდ: კატეგორია Consumables, ლოკაცია IT Warehouse და რაოდენობა <= 5
-    results = results.filter(r => r[3] === 'Consumables' && r[5] === 'IT Warehouse' && Number(r[4]) > 0 && Number(r[4]) <= 5);
+  if (filters.special === 'lowStockIT') {
+    results = results.filter(r => r[3] === 'Consumables' && r[5] === 'IT Warehouse' && Number(r[4]) > 0 && Number(r[4]) <= 3);
+  }
+  if (filters.special === 'lowStockFloor') {
+    results = results.filter(r => r[3] === 'Consumables' && r[5] === "Floor's Cabinet" && Number(r[4]) > 0 && Number(r[4]) <= 1);
   }
   if (filters.special === 'warranty') {
     const nextMonth = new Date();
