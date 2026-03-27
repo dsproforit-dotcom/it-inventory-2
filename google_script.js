@@ -54,11 +54,14 @@ function searchItems(filters) {
   return formatData(results);
 }
 
-// ახალი ფუნქცია: ისტორიის წამოღება
+// ახალი ფუნქცია: ისტორიის სრულად წამოღება (ლიმიტის გარეშე)
 function getHistory() {
   const sheet = SpreadsheetApp.getActive().getSheetByName(HISTORY_SHEET);
   const data = sheet.getDataRange().getValues().slice(1);
-  return formatData(data.reverse().slice(0, 100)); // ბოლო 100 ჩანაწერი
+  
+  // reverse() ვაკეთებთ, რომ ახალი ჩანაწერები ზემოთ მოექცეს.
+  // ძველი .slice(0, 100) წავშალეთ, ახლა მოაქვს აბსოლუტურად ყველაფერი!
+  return formatData(data.reverse()); 
 }
 
 // მონაცემების ფორმატირება (თარიღები და null-ები)
@@ -127,16 +130,28 @@ function addNewItem(data) {
   const lock = LockService.getScriptLock();
   
   try {
-    lock.waitLock(10000); // 10 წამი ველოდებით, რომ სხვამ არ ჩაწეროს ამ დროს
+    lock.waitLock(10000); 
     
-    // 1. ვაგენერირებთ ახალ ID-ს
-    const newId = 'ITM-' + Utilities.getUuid().split('-')[0].toUpperCase();
+    // 🔴 1. ლოგიკა ID-სთვის
+    let newId = data.itemId;
+    
+    // თუ ველი ცარიელია, ვაგენერირებთ ავტომატურად
+    if (!newId || newId.trim() === "") {
+      newId = 'ITM-' + Utilities.getUuid().split('-')[0].toUpperCase();
+    } else {
+      // თუ ხელით ჩაწერეს, ვამოწმებთ ხომ არ არსებობს უკვე ბაზაში
+      const existingIds = dbSheet.getRange("B:B").getValues().flat();
+      if (existingIds.includes(newId)) {
+        throw new Error("ეს ID უკვე არსებობს ბაზაში! გთხოვთ მიუთითოთ სხვა, ან დატოვეთ ველი ცარიელი.");
+      }
+    }
+    
     const timestamp = new Date();
     
-    // 2. ვამზადებთ ახალ რიგს ITEMS_DB-სთვის (სვეტების თანმიმდევრობის ზუსტი დაცვით)
+    // 2. ვამზადებთ ახალ რიგს
     const newRow = [
       timestamp,          // A: Timestamp
-      newId,              // B: Item ID
+      newId,              // B: Item ID 
       data.name,          // C: Name
       data.category,      // D: Category
       data.qty,           // E: Quantity
@@ -149,7 +164,7 @@ function addNewItem(data) {
     // 3. ვამატებთ მთავარ ბაზაში
     dbSheet.appendRow(newRow);
     
-    // 4. ვამატებთ ისტორიაში (ვიყენებთ შენს არსებულ ფუნქციას)
+    // 4. ვამატებთ ისტორიაში
     const noteForHistory = data.notes ? data.notes : '🚫📝  NO TXT  🚫📝';
     logHistory('ADD', newId, data.name, 'N/A', data.location, data.qty, 'SYSTEM', noteForHistory);
     
@@ -256,63 +271,57 @@ function transferItem(data) {
   }
 }
 
+
 // --- Dashboard Statistics ---
 function getDashboardData() {
-  const ss = SpreadsheetApp.getActive();
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
   const dbData = ss.getSheetByName(DB_SHEET).getDataRange().getValues().slice(1);
   const historyData = ss.getSheetByName(HISTORY_SHEET).getDataRange().getValues().slice(1);
   
   let totalItems = dbData.length;
   let totalQty = 0;
-  let lowStock = 0;
+  let lowStockIT = 0;      // 👈 IT საწყობისთვის
+  let lowStockFloor = 0;   // 👈 სართულების კარადისთვის
   let expiringWarranties = 0;
   
   const nextMonth = new Date();
   nextMonth.setDate(nextMonth.getDate() + 30);
 
   dbData.forEach(row => {
-    let category = row[3]; // D სვეტი - კატეგორია
-    let qty = Number(row[4]); // E სვეტი - რაოდენობა
-    let location = row[5]; // F სვეტი - ლოკაცია
+    let category = row[3]; 
+    let qty = Number(row[4]); 
+    let location = row[5]; 
 
     if (!isNaN(qty)) {
       totalQty += qty;
       
-      // ლოგიკა: ამოწურვის პირასაა მხოლოდ Consumables კატეგორია, რომელიც არის IT Warehouse-ში და ჩამოსცდა 5-ს
-      if (category === 'Consumables' && location === 'IT Warehouse' && qty > 0 && qty <= 5) {
-        lowStock++; 
+      // 💡 ამოწურვის პირას მყოფი ნივთების დათვლა ლოკაციების მიხედვით
+      if (category === 'Consumables' && qty > 0 && qty <= 5) {
+        if (location === 'IT Warehouse') {
+          lowStockIT++; 
+        } else if (location === "Floor's Cabinet") {
+          lowStockFloor++; 
+        }
       }
     }
-    
-    // გარანტიის შემოწმება
-    let warrantyDate = row[6];
-    if (warrantyDate && warrantyDate instanceof Date) {
-      if (warrantyDate <= nextMonth) expiringWarranties++;
-    }
+    if (row[6] && row[6] instanceof Date && row[6] <= nextMonth) expiringWarranties++;
   });
 
-  // ვიღებთ ბოლო 10 მოქმედებას სრული ინფორმაციით
-    const recentHistory = historyData.reverse().slice(0, 10).map(row => {
-      return {
-        date: Utilities.formatDate(new Date(row[0]), Session.getScriptTimeZone(), "MMM dd, HH:mm"),
-        itemId: row[1],
-        item: row[2],
-        action: row[3],
-        from: row[4],
-        to: row[5],
-        qty: row[6],
-        user: row[7],
-        note: row[8] || '-'
-      };
-    });
-
+  const recentHistory = historyData.reverse().slice(0, 10).map(row => {
     return {
-      totalItems: totalItems,
-      totalQty: totalQty,
-      lowStock: lowStock,
-      expiringWarranties: expiringWarranties,
-      recentHistory: recentHistory
+      date: Utilities.formatDate(new Date(row[0]), Session.getScriptTimeZone(), "MMM dd, HH:mm"),
+      itemId: row[1], item: row[2], action: row[3], from: row[4], to: row[5], qty: row[6], user: row[7], note: row[8] || '-'
     };
+  });
+
+  return {
+    totalItems: totalItems,
+    totalQty: totalQty,
+    lowStockIT: lowStockIT,       // 👈 ვაბრუნებთ ცალკე
+    lowStockFloor: lowStockFloor, // 👈 ვაბრუნებთ ცალკე
+    expiringWarranties: expiringWarranties,
+    recentHistory: recentHistory
+  };
 }
 
 
