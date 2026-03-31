@@ -19,7 +19,7 @@ h1 { color: #1a73e8; text-align: center; margin-bottom: 30px; font-weight: 700; 
 
 .recent-activity { background: white; padding: 25px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
 .recent-activity h3 { margin-top: 0; color: #2c3e50; border-bottom: 2px solid #f4f7f6; padding-bottom: 15px; }
-.badge { padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; color: white; margin-right: 10px; }
+.badge { padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; color: white; margin-right: 10px; white-space: nowrap;}
 .badge.ADD { background: #28a745; } .badge.TRANSFER { background: #fd7e14; } .badge.WRITE-OFF { background: #dc3545; } .badge.ISSUE { background: #6f42c1; } .badge.RESTOCK { background: #17a2b8; }
 .badge.UPDATE {
   background-color: #17a2b8; /* ლამაზი ფირუზისფერი / Info ფერი */
