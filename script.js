@@ -181,12 +181,11 @@ function displayResults(results) {
 
   messageDiv.innerHTML = `✅ Found ${results.length} items`; messageDiv.className = 'message success'; messageDiv.style.display = 'block';
   let html = '';
-  results.forEach(row => {
+  
+  results.forEach((row, index) => {
     let photoHtml = (row[7] && row[7].toString().startsWith('http')) ? `<a href="${row[7]}" target="_blank">🖼️</a>` : (row[7] || '-');
     
-    // ფრთხილად: row მონაცემებს ვატანთ პირდაპირ openEditModal-ს, რომ იქ ველები შეივსოს
-    let rowDataString = encodeURIComponent(JSON.stringify(row));
-    
+    // ვქმნით ღილაკს, რომელიც ინდექსს გადასცემს ფუნქციას და არა მთლიან ტექსტს
     html += `<tr>
       <td data-label="ID"><strong>${row[1]}</strong></td>
       <td data-label="Name">${row[2]}</td>
@@ -198,7 +197,7 @@ function displayResults(results) {
       <td data-label="Note">${row[8] || '-'}</td>
       <td data-label="Action" style="display:flex; gap:5px;">
         <button class="copy-btn" onclick="copyId('${row[1]}', this)" style="flex:1;">📋</button>
-        <button class="copy-btn" onclick="openEditModal('${rowDataString}')" style="flex:1; background:#007bff; color:white; border-color:#007bff;">✏️</button>
+        <button class="copy-btn" onclick="openEditModalByIndex(${index})" style="flex:1; background:#007bff; color:white; border-color:#007bff;">✏️</button>
       </td>
     </tr>`;
   });
@@ -434,30 +433,7 @@ function downloadHistoryCSV() {
 // =========================================================
 // ✏️ EDIT & DELETE MODAL LOGIC
 // =========================================================
-function openEditModal(rowDataString) {
-  const row = JSON.parse(decodeURIComponent(rowDataString));
-  document.getElementById('editId').value = row[1];
-  document.getElementById('editName').value = row[2];
-  document.getElementById('editCategory').value = row[3];
-  document.getElementById('editQty').value = row[4];
-  document.getElementById('editLocation').value = row[5];
-  
-  // Warranty თარიღის ფორმატირება (YYYY-MM-DD), თუ არსებობს
-  let rawDate = row[6];
-  if(rawDate && rawDate !== '-' && rawDate !== '') {
-    try { 
-      let d = new Date(rawDate);
-      document.getElementById('editWarranty').value = d.toISOString().split('T')[0];
-    } catch(e) { document.getElementById('editWarranty').value = ''; }
-  } else {
-    document.getElementById('editWarranty').value = '';
-  }
 
-  document.getElementById('editPic').value = row[7] || '';
-  document.getElementById('editNotes').value = row[8] || '';
-
-  document.getElementById('editModal').style.display = 'block';
-}
 
 function closeEditModal() {
   document.getElementById('editModal').style.display = 'none';
@@ -513,3 +489,30 @@ window.addEventListener('click', function(event) {
   if (event.target === document.getElementById('transferModal')) closeTransferModal();
   if (event.target === document.getElementById('editModal')) closeEditModal(); // 👈
 });
+
+
+// ახალი, უსაფრთხო ფუნქცია Edit მოდალის გასახსნელად
+function openEditModalByIndex(index) {
+  const row = currentResults[index];
+  
+  document.getElementById('editId').value = row[1];
+  document.getElementById('editName').value = row[2];
+  document.getElementById('editCategory').value = row[3];
+  document.getElementById('editQty').value = row[4];
+  document.getElementById('editLocation').value = row[5];
+  
+  let rawDate = row[6];
+  if(rawDate && rawDate !== '-' && rawDate !== '') {
+    try { 
+      let d = new Date(rawDate);
+      document.getElementById('editWarranty').value = d.toISOString().split('T')[0];
+    } catch(e) { document.getElementById('editWarranty').value = ''; }
+  } else {
+    document.getElementById('editWarranty').value = '';
+  }
+
+  document.getElementById('editPic').value = row[7] || '';
+  document.getElementById('editNotes').value = row[8] || '';
+
+  document.getElementById('editModal').style.display = 'block';
+}
