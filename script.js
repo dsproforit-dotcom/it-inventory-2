@@ -433,67 +433,11 @@ function downloadHistoryCSV() {
 // =========================================================
 // ✏️ EDIT & DELETE MODAL LOGIC
 // =========================================================
+let currentEditOldLocation = ""; // 👈 ეს არის ჩვენი მხსნელი ცვლადი
 
-
-function closeEditModal() {
-  document.getElementById('editModal').style.display = 'none';
-}
-
-async function submitEditItem() {
-  const btn = document.getElementById('btnEditSubmit');
-  const payload = {
-    itemId: document.getElementById('editId').value,
-    name: document.getElementById('editName').value.trim(),
-    category: document.getElementById('editCategory').value,
-    qty: document.getElementById('editQty').value,
-    location: document.getElementById('editLocation').value,
-    warranty: document.getElementById('editWarranty').value,
-    pic: document.getElementById('editPic').value,
-    notes: document.getElementById('editNotes').value
-  };
-
-  if(!payload.name || payload.qty === '') return alert("Name and Qty are required!");
-
-  btn.innerText = "⏳ Saving..."; btn.disabled = true;
-  try {
-    const response = await fetchAPI("EDIT_ITEM", payload);
-    btn.innerText = "💾 Save Changes"; btn.disabled = false;
-    closeEditModal(); showMessage(response.message, 'success'); 
-    fetchFullInventory(); loadDashboardData(); fullHistoryData = [];
-  } catch (e) {
-    btn.innerText = "💾 Save Changes"; btn.disabled = false; alert("Error: " + e.message);
-  }
-}
-
-async function deleteItem() {
-  const itemId = document.getElementById('editId').value;
-  const location = document.getElementById('editLocation').value; // გვჭირდება ზუსტად იმ რიგის წასაშლელად
-
-  if(!confirm(`⚠️ ARE YOU SURE you want to DELETE [ ${itemId} ] from [ ${location} ]?\n\nThis will remove it from the main database completely.`)) return;
-
-  const btn = document.getElementById('btnDeleteSubmit');
-  btn.innerText = "⏳ Deleting..."; btn.disabled = true;
-  try {
-    const response = await fetchAPI("DELETE_ITEM", { itemId: itemId, location: location });
-    btn.innerText = "🗑️ Delete"; btn.disabled = false;
-    closeEditModal(); showMessage(response.message, 'success'); 
-    fetchFullInventory(); loadDashboardData(); fullHistoryData = [];
-  } catch (e) {
-    btn.innerText = "🗑️ Delete"; btn.disabled = false; alert("Error: " + e.message);
-  }
-}
-
-// Modal დახურვის Event Listener-ში editModal-ის დამატება:
-window.addEventListener('click', function(event) {
-  if (event.target === document.getElementById('addModal')) closeModal();
-  if (event.target === document.getElementById('transferModal')) closeTransferModal();
-  if (event.target === document.getElementById('editModal')) closeEditModal(); // 👈
-});
-
-
-// ახალი, უსაფრთხო ფუნქცია Edit მოდალის გასახსნელად
 function openEditModalByIndex(index) {
   const row = currentResults[index];
+  currentEditOldLocation = row[5]; // 👈 ვინახავთ ძველ ლოკაციას
   
   document.getElementById('editId').value = row[1];
   document.getElementById('editName').value = row[2];
@@ -515,6 +459,55 @@ function openEditModalByIndex(index) {
   document.getElementById('editNotes').value = row[8] || '';
 
   document.getElementById('editModal').style.display = 'block';
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').style.display = 'none';
+}
+
+async function submitEditItem() {
+  const btn = document.getElementById('btnEditSubmit');
+  const payload = {
+    itemId: document.getElementById('editId').value,
+    oldLocation: currentEditOldLocation, // 👈 გუგლს ვუგზავნით ძველ ლოკაციას
+    name: document.getElementById('editName').value.trim(),
+    category: document.getElementById('editCategory').value,
+    qty: document.getElementById('editQty').value,
+    location: document.getElementById('editLocation').value, // 👈 ეს შეიძლება შეცვლილი იყოს
+    warranty: document.getElementById('editWarranty').value,
+    pic: document.getElementById('editPic').value,
+    notes: document.getElementById('editNotes').value
+  };
+
+  if(!payload.name || payload.qty === '') return alert("Name and Qty are required!");
+
+  btn.innerText = "⏳ Saving..."; btn.disabled = true;
+  try {
+    const response = await fetchAPI("EDIT_ITEM", payload);
+    btn.innerText = "💾 Save Changes"; btn.disabled = false;
+    closeEditModal(); showMessage(response.message, 'success'); 
+    fetchFullInventory(); loadDashboardData(); fullHistoryData = [];
+  } catch (e) {
+    btn.innerText = "💾 Save Changes"; btn.disabled = false; alert("Error: " + e.message);
+  }
+}
+
+async function deleteItem() {
+  const itemId = document.getElementById('editId').value;
+  const locationToDelete = currentEditOldLocation; // 👈 ვშლით ზუსტად ძველი ლოკაციიდან!
+
+  if(!confirm(`⚠️ ARE YOU SURE you want to DELETE [ ${itemId} ] from [ ${locationToDelete} ]?\n\nThis will remove it from the main database completely.`)) return;
+
+  const btn = document.getElementById('btnDeleteSubmit');
+  btn.innerText = "⏳ Deleting..."; btn.disabled = true;
+  try {
+    const response = await fetchAPI("DELETE_ITEM", { itemId: itemId, location: locationToDelete });
+    btn.innerText = "🗑️ Delete"; btn.disabled = false;
+    closeEditModal(); showMessage(response.message, 'success'); 
+    fetchFullInventory(); loadDashboardData(); fullHistoryData = [];
+  } catch (e) {
+    btn.innerText = "🗑️ Delete"; btn.disabled = false; alert("Error: " + e.message);
+  }
 }
 
 
