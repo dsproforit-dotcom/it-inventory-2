@@ -392,6 +392,7 @@ function checkScannerClick(e) { if (e.target.id === 'scannerModal') stopScanner(
 window.addEventListener('click', function(event) {
   if (event.target === document.getElementById('addModal')) closeModal();
   if (event.target === document.getElementById('transferModal')) closeTransferModal();
+  if (event.target === document.getElementById('editModal')) closeEditModal();
 });
 
 function displayError(e) { document.getElementById('message').innerText = '❌ Error: ' + e.message; document.getElementById('message').className = 'message error'; document.getElementById('message').style.display = 'block'; }
