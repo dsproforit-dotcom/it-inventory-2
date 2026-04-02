@@ -324,7 +324,7 @@ function toggleToLocation() {
 }
 
 async function submitTransfer() {
-  const btn = document.getElementById('btnTransSubmit'); const itemId = document.getElementById('transItemId').value.trim(); const qty = document.getElementById('transQty').value.trim(); const fromLoc = document.getElementById('transFromLoc').value; const action = document.getElementById('transAction').value; const toLoc = document.getElementById('transToLoc').value;
+  const btn = document.getElementById('btnTransSubmit'); const itemId = document.getElementById('transItemId').value.trim(); const qty = document.getElementById('transQty').value.trim(); const fromLoc = document.getElementById('transFromLoc').value; const action = document.getElementById('transAction').value; const toLoc = (action === 'TRANSFER') ? document.getElementById('transToLoc').value : 'N/A';
   if(!itemId || !qty) return alert("Please fill Item ID and Quantity!");
   if(action === 'TRANSFER' && fromLoc === toLoc) return alert("Locations cannot be the same!");
   const payload = { itemId: itemId, action: action, qty: qty, resp: document.getElementById('transResp').value, fromLoc: fromLoc, toLoc: toLoc, note: document.getElementById('transNotes').value };
