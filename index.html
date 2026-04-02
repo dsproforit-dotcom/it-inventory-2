@@ -223,3 +223,36 @@
 <script src="script.js"></script>
 </body>
 </html>
+
+<div id="editModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>✏️ Edit Item</h2>
+      <span class="close" onclick="closeEditModal()">&times;</span>
+    </div>
+    
+    <div class="form-group">
+      <label>Item ID (Cannot be changed)</label>
+      <input type="text" id="editId" readonly style="background: #e9ecef; color: #6c757d; font-weight: bold;">
+    </div>
+    <div class="form-group"><label>Name *</label><input type="text" id="editName" required></div>
+    
+    <div style="display: flex; gap: 15px;">
+      <div class="form-group" style="flex: 1;"><label>Category *</label><select id="editCategory"></select></div>
+      <div class="form-group" style="flex: 1;"><label>Quantity *</label><input type="number" id="editQty" required min="0"></div>
+    </div>
+    
+    <div style="display: flex; gap: 15px;">
+      <div class="form-group" style="flex: 1;"><label>Location *</label><select id="editLocation"></select></div>
+      <div class="form-group" style="flex: 1;"><label>Warranty</label><input type="date" id="editWarranty"></div>
+    </div>
+    
+    <div class="form-group"><label>Picture URL</label><input type="text" id="editPic"></div>
+    <div class="form-group"><label>Notes</label><textarea id="editNotes"></textarea></div>
+    
+    <div style="display: flex; gap: 10px; margin-top: 15px;">
+      <button class="btn-submit" onclick="submitEditItem()" id="btnEditSubmit" style="flex: 2; background: #007bff;">💾 Save Changes</button>
+      <button class="btn-submit" onclick="deleteItem()" id="btnDeleteSubmit" style="flex: 1; background: #dc3545;">🗑️ Delete</button>
+    </div>
+  </div>
+</div>

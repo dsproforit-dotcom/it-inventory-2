@@ -354,6 +354,8 @@ function doPost(e) {
       case "ADD_ITEM": result = addNewItem(payload); break;
       case "TRANSFER_ITEM": result = transferItem(payload); break;
       case "GET_HISTORY": result = getHistory(); break;
+      case "EDIT_ITEM": result = editExistingItem(payload); break;     // 👈 ახალი
+      case "DELETE_ITEM": result = deleteItemDirectly(payload); break; // 👈 ახალი
       default: throw new Error("უცნობი ბრძანება (Action): " + action);
     }
     
@@ -363,5 +365,88 @@ function doPost(e) {
   } catch (error) {
     return ContentService.createTextOutput(JSON.stringify({ success: false, message: error.toString() }))
       .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+
+/****
+ * ✏️ EDIT ITEM
+ */
+function editExistingItem(data) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const db = ss.getSheetByName(DB_SHEET);
+  const lock = LockService.getScriptLock();
+  
+  try {
+    lock.waitLock(10000); 
+    const itemId = data.itemId;
+    const dbValues = db.getDataRange().getValues();
+    
+    // ვეძებთ ნივთს ID-ით და ძველი ლოკაციით (რომ ზუსტი რიგი ვიპოვოთ)
+    let targetRowIndex = -1;
+    // ვინაიდან ID უნიკალურია და გვინდა ლოკაციაც დავემთხვათ (თუ გაყოფილი არაა), ვეძებთ
+    // მაგრამ რადგან Edit მოდალში ლოკაციის შეცვლაც შეიძლება, ჯობია უბრალოდ ვიპოვოთ ის რიგი,
+    // სადაც ეს ID წერია (თუ რამდენიმე ლოკაციაზეა, რთულდება. ამიტომ ვპოულობთ პირველს).
+    for (let i = 1; i < dbValues.length; i++) {
+      if (dbValues[i][1] === itemId) {
+        targetRowIndex = i + 1; // ექსელის რიგები 1-დან იწყება
+        break;
+      }
+    }
+    
+    if (targetRowIndex === -1) throw new Error("Item ID not found in database.");
+
+    // ვააფდეითებთ მონაცემებს ამ რიგში
+    const range = db.getRange(targetRowIndex, 3, 1, 7); // C დან I-მდე (7 სვეტი)
+    range.setValues([[
+      data.name, data.category, data.qty, data.location, data.warranty, data.pic, data.notes
+    ]]);
+    
+    logHistory('UPDATE', itemId, data.name, 'N/A', data.location, data.qty, 'SYSTEM', 'Full Edit via UI');
+    
+    return { success: true, message: `✅ რიგი განახლდა: ${itemId}` };
+  } catch (error) {
+    return { success: false, message: error.message };
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/****
+ * 🗑️ DELETE ITEM
+ */
+function deleteItemDirectly(data) {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const db = ss.getSheetByName(DB_SHEET);
+  const lock = LockService.getScriptLock();
+  
+  try {
+    lock.waitLock(10000); 
+    const itemId = data.itemId;
+    const location = data.location;
+    const dbValues = db.getDataRange().getValues();
+    
+    let targetRowIndex = -1;
+    let itemName = "UNKNOWN";
+
+    for (let i = 1; i < dbValues.length; i++) {
+      if (dbValues[i][1] === itemId && dbValues[i][5] === location) {
+        targetRowIndex = i + 1;
+        itemName = dbValues[i][2];
+        break;
+      }
+    }
+    
+    if (targetRowIndex === -1) throw new Error("Item not found or location mismatch.");
+
+    db.deleteRow(targetRowIndex);
+    
+    logHistory('WRITE-OFF', itemId, itemName, location, 'DELETED', 0, 'SYSTEM', 'Deleted via UI');
+    
+    return { success: true, message: `🗑️ რიგი წაიშალა: ${itemId}` };
+  } catch (error) {
+    return { success: false, message: error.message };
+  } finally {
+    lock.releaseLock();
   }
 }

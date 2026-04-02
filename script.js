@@ -128,12 +128,14 @@ function populateDropdowns(options) {
   const filterCat = document.getElementById('filterCategory'); const filterLoc = document.getElementById('filterLocation');
   const addCat = document.getElementById('addCategory'); const addLoc = document.getElementById('addLocation');
   const transFrom = document.getElementById('transFromLoc'); const transTo = document.getElementById('transToLoc');
+  const editCat = document.getElementById('editCategory'); const editLoc = document.getElementById('editLocation'); // 👈
 
   filterCat.innerHTML = '<option value="ALL">All Categories</option>'; filterLoc.innerHTML = '<option value="ALL">All Locations</option>';
   addCat.innerHTML = ''; addLoc.innerHTML = ''; transFrom.innerHTML = ''; transTo.innerHTML = '';
+  editCat.innerHTML = ''; editLoc.innerHTML = ''; // 👈
 
-  options.categories.forEach(c => { filterCat.add(new Option(c, c)); addCat.add(new Option(c, c)); });
-  options.locations.forEach(l => { filterLoc.add(new Option(l, l)); addLoc.add(new Option(l, l)); transFrom.add(new Option(l, l)); transTo.add(new Option(l, l)); });
+  options.categories.forEach(c => { filterCat.add(new Option(c, c)); addCat.add(new Option(c, c)); editCat.add(new Option(c, c)); }); // 👈 editCat
+  options.locations.forEach(l => { filterLoc.add(new Option(l, l)); addLoc.add(new Option(l, l)); transFrom.add(new Option(l, l)); transTo.add(new Option(l, l)); editLoc.add(new Option(l, l)); }); // 👈 editLoc
 }
 
 function search() {
@@ -181,7 +183,24 @@ function displayResults(results) {
   let html = '';
   results.forEach(row => {
     let photoHtml = (row[7] && row[7].toString().startsWith('http')) ? `<a href="${row[7]}" target="_blank">🖼️</a>` : (row[7] || '-');
-    html += `<tr><td data-label="ID"><strong>${row[1]}</strong></td><td data-label="Name">${row[2]}</td><td data-label="Category">${row[3]}</td><td data-label="Qty">${row[4]}</td><td data-label="Location">${row[5]}</td><td data-label="Warranty">${row[6]}</td><td data-label="Pic">${photoHtml}</td><td data-label="Note">${row[8] || '-'}</td><td data-label="Action"><button class="copy-btn" onclick="copyId('${row[1]}', this)">📋 Copy</button></td></tr>`;
+    
+    // ფრთხილად: row მონაცემებს ვატანთ პირდაპირ openEditModal-ს, რომ იქ ველები შეივსოს
+    let rowDataString = encodeURIComponent(JSON.stringify(row));
+    
+    html += `<tr>
+      <td data-label="ID"><strong>${row[1]}</strong></td>
+      <td data-label="Name">${row[2]}</td>
+      <td data-label="Category">${row[3]}</td>
+      <td data-label="Qty">${row[4]}</td>
+      <td data-label="Location">${row[5]}</td>
+      <td data-label="Warranty">${row[6]}</td>
+      <td data-label="Pic">${photoHtml}</td>
+      <td data-label="Note">${row[8] || '-'}</td>
+      <td data-label="Action" style="display:flex; gap:5px;">
+        <button class="copy-btn" onclick="copyId('${row[1]}', this)" style="flex:1;">📋</button>
+        <button class="copy-btn" onclick="openEditModal('${rowDataString}')" style="flex:1; background:#007bff; color:white; border-color:#007bff;">✏️</button>
+      </td>
+    </tr>`;
   });
   tbody.innerHTML = html;
 }
@@ -411,3 +430,86 @@ function downloadHistoryCSV() {
   link.click(); 
   document.body.removeChild(link);
 }
+
+// =========================================================
+// ✏️ EDIT & DELETE MODAL LOGIC
+// =========================================================
+function openEditModal(rowDataString) {
+  const row = JSON.parse(decodeURIComponent(rowDataString));
+  document.getElementById('editId').value = row[1];
+  document.getElementById('editName').value = row[2];
+  document.getElementById('editCategory').value = row[3];
+  document.getElementById('editQty').value = row[4];
+  document.getElementById('editLocation').value = row[5];
+  
+  // Warranty თარიღის ფორმატირება (YYYY-MM-DD), თუ არსებობს
+  let rawDate = row[6];
+  if(rawDate && rawDate !== '-' && rawDate !== '') {
+    try { 
+      let d = new Date(rawDate);
+      document.getElementById('editWarranty').value = d.toISOString().split('T')[0];
+    } catch(e) { document.getElementById('editWarranty').value = ''; }
+  } else {
+    document.getElementById('editWarranty').value = '';
+  }
+
+  document.getElementById('editPic').value = row[7] || '';
+  document.getElementById('editNotes').value = row[8] || '';
+
+  document.getElementById('editModal').style.display = 'block';
+}
+
+function closeEditModal() {
+  document.getElementById('editModal').style.display = 'none';
+}
+
+async function submitEditItem() {
+  const btn = document.getElementById('btnEditSubmit');
+  const payload = {
+    itemId: document.getElementById('editId').value,
+    name: document.getElementById('editName').value.trim(),
+    category: document.getElementById('editCategory').value,
+    qty: document.getElementById('editQty').value,
+    location: document.getElementById('editLocation').value,
+    warranty: document.getElementById('editWarranty').value,
+    pic: document.getElementById('editPic').value,
+    notes: document.getElementById('editNotes').value
+  };
+
+  if(!payload.name || payload.qty === '') return alert("Name and Qty are required!");
+
+  btn.innerText = "⏳ Saving..."; btn.disabled = true;
+  try {
+    const response = await fetchAPI("EDIT_ITEM", payload);
+    btn.innerText = "💾 Save Changes"; btn.disabled = false;
+    closeEditModal(); showMessage(response.message, 'success'); 
+    fetchFullInventory(); loadDashboardData(); fullHistoryData = [];
+  } catch (e) {
+    btn.innerText = "💾 Save Changes"; btn.disabled = false; alert("Error: " + e.message);
+  }
+}
+
+async function deleteItem() {
+  const itemId = document.getElementById('editId').value;
+  const location = document.getElementById('editLocation').value; // გვჭირდება ზუსტად იმ რიგის წასაშლელად
+
+  if(!confirm(`⚠️ ARE YOU SURE you want to DELETE [ ${itemId} ] from [ ${location} ]?\n\nThis will remove it from the main database completely.`)) return;
+
+  const btn = document.getElementById('btnDeleteSubmit');
+  btn.innerText = "⏳ Deleting..."; btn.disabled = true;
+  try {
+    const response = await fetchAPI("DELETE_ITEM", { itemId: itemId, location: location });
+    btn.innerText = "🗑️ Delete"; btn.disabled = false;
+    closeEditModal(); showMessage(response.message, 'success'); 
+    fetchFullInventory(); loadDashboardData(); fullHistoryData = [];
+  } catch (e) {
+    btn.innerText = "🗑️ Delete"; btn.disabled = false; alert("Error: " + e.message);
+  }
+}
+
+// Modal დახურვის Event Listener-ში editModal-ის დამატება:
+window.addEventListener('click', function(event) {
+  if (event.target === document.getElementById('addModal')) closeModal();
+  if (event.target === document.getElementById('transferModal')) closeTransferModal();
+  if (event.target === document.getElementById('editModal')) closeEditModal(); // 👈
+});
