@@ -85,3 +85,52 @@ tr:hover { background-color: #fcfcfc; }
   div[style*="display: flex; gap: 15px;"] { flex-direction: row; gap: 10px !important; }
   .btn-submit { padding: 10px; margin-top: 5px; font-size: 15px; }
 }
+
+/* ========================================================= */
+/* 🌙 DARK MODE STYLES */
+/* ========================================================= */
+body.dark-mode {
+  background-color: #121212;
+  color: #e0e0e0;
+}
+body.dark-mode h1 { color: #64b5f6; }
+body.dark-mode .tab-btn { background: #1e1e1e; color: #a0a0a0; }
+body.dark-mode .tab-btn:hover { background: #2d2d2d; }
+body.dark-mode .tab-btn.active { background: #1a73e8; color: white; }
+
+/* ბარათები და ფანჯრები */
+body.dark-mode .kpi-card,
+body.dark-mode .recent-activity,
+body.dark-mode .filter-container,
+body.dark-mode .table-container,
+body.dark-mode .modal-content {
+  background: #1e1e1e;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+  color: #e0e0e0;
+}
+
+/* ტექსტები და ველები */
+body.dark-mode .kpi-title, body.dark-mode .filter-group label, body.dark-mode th { color: #a0a0a0; }
+body.dark-mode .kpi-value, body.dark-mode .recent-activity h3 { color: #ffffff; }
+body.dark-mode .kpi-icon { background: #2d2d2d; }
+body.dark-mode input, body.dark-mode select, body.dark-mode textarea {
+  background: #2d2d2d; color: #ffffff; border: 1px solid #444;
+}
+body.dark-mode input:focus, body.dark-mode select:focus, body.dark-mode textarea:focus { border-color: #64b5f6; }
+
+/* ცხრილი */
+body.dark-mode tr { border-color: #333; }
+body.dark-mode tr:hover { background-color: #2a2a2a; }
+body.dark-mode td, body.dark-mode th { border-bottom: 1px solid #333; }
+body.dark-mode th { background: #252525; }
+body.dark-mode .copy-btn { background: #333; color: #e0e0e0; border-color: #555; }
+body.dark-mode td::before { color: #a0a0a0; } /* მობილურის ლეიბლები */
+
+/* მოდალი და შეტყობინებები */
+body.dark-mode .modal-header { border-bottom: 2px solid #333; }
+body.dark-mode .modal-header h2 { color: #e0e0e0; }
+body.dark-mode .close { color: #888; }
+body.dark-mode .close:hover { color: #ff5252; }
+body.dark-mode .message.loading { background: #1e2a3b; color: #64b5f6; }
+body.dark-mode .message.success { background: #1b3320; color: #81c784; }
+body.dark-mode .message.error { background: #3b1c1c; color: #e57373; }

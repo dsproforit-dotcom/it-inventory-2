@@ -516,3 +516,27 @@ function openEditModalByIndex(index) {
 
   document.getElementById('editModal').style.display = 'block';
 }
+
+
+// =========================================================
+// 🌙 DARK MODE LOGIC
+// =========================================================
+// შევამოწმოთ, ადრე ხომ არ ჰქონდა ჩართული მომხმარებელს Dark Mode
+if (localStorage.getItem('theme') === 'dark') {
+  document.body.classList.add('dark-mode');
+  const toggleBtn = document.getElementById('themeToggle');
+  if (toggleBtn) toggleBtn.innerText = '☀️';
+}
+
+function toggleTheme() {
+  document.body.classList.toggle('dark-mode');
+  const btn = document.getElementById('themeToggle');
+  
+  if (document.body.classList.contains('dark-mode')) {
+    localStorage.setItem('theme', 'dark'); // ვიმახსოვრებთ მუქს
+    btn.innerText = '☀️'; // მზის იკონკა გასათიშად
+  } else {
+    localStorage.setItem('theme', 'light'); // ვიმახსოვრებთ ნათელს
+    btn.innerText = '🌙'; // მთვარის იკონკა ჩასართავად
+  }
+}
