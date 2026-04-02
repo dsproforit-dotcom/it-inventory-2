@@ -331,7 +331,7 @@ function getDashboardData() {
 // ========================================================
 // 🌐 API ROUTER: გარე საიტიდან შემოსული მოთხოვნების მართვა
 // ========================================================
-const SECRET_PIN = "qball0409"; // 👈 აქ დაწერე შენი საიდუმლო პაროლი!
+const SECRET_PIN = PropertiesService.getScriptProperties().getProperty('INVENTORY_PIN'); // 👈 აქ დაწერე შენი საიდუმლო პაროლი!
 
 function doPost(e) {
   try {
@@ -380,29 +380,28 @@ function editExistingItem(data) {
   try {
     lock.waitLock(10000); 
     const itemId = data.itemId;
+    const oldLocation = data.oldLocation; // 👈 ვიჭერთ ძველ ლოკაციას
     const dbValues = db.getDataRange().getValues();
     
-    // ვეძებთ ნივთს ID-ით და ძველი ლოკაციით (რომ ზუსტი რიგი ვიპოვოთ)
     let targetRowIndex = -1;
-    // ვინაიდან ID უნიკალურია და გვინდა ლოკაციაც დავემთხვათ (თუ გაყოფილი არაა), ვეძებთ
-    // მაგრამ რადგან Edit მოდალში ლოკაციის შეცვლაც შეიძლება, ჯობია უბრალოდ ვიპოვოთ ის რიგი,
-    // სადაც ეს ID წერია (თუ რამდენიმე ლოკაციაზეა, რთულდება. ამიტომ ვპოულობთ პირველს).
+    
+    // ვეძებთ ID-ით და ძველი ლოკაციით ერთდროულად!
     for (let i = 1; i < dbValues.length; i++) {
-      if (dbValues[i][1] === itemId) {
-        targetRowIndex = i + 1; // ექსელის რიგები 1-დან იწყება
+      if (dbValues[i][1] === itemId && dbValues[i][5] === oldLocation) {
+        targetRowIndex = i + 1;
         break;
       }
     }
     
-    if (targetRowIndex === -1) throw new Error("Item ID not found in database.");
+    if (targetRowIndex === -1) throw new Error("Item not found in the specified location.");
 
     // ვააფდეითებთ მონაცემებს ამ რიგში
-    const range = db.getRange(targetRowIndex, 3, 1, 7); // C დან I-მდე (7 სვეტი)
+    const range = db.getRange(targetRowIndex, 3, 1, 7); 
     range.setValues([[
       data.name, data.category, data.qty, data.location, data.warranty, data.pic, data.notes
     ]]);
     
-    logHistory('UPDATE', itemId, data.name, 'N/A', data.location, data.qty, 'SYSTEM', 'Full Edit via UI');
+    logHistory('UPDATE', itemId, data.name, oldLocation, data.location, data.qty, 'SYSTEM', 'Full Edit via UI');
     
     return { success: true, message: `✅ რიგი განახლდა: ${itemId}` };
   } catch (error) {
@@ -450,3 +449,5 @@ function deleteItemDirectly(data) {
     lock.releaseLock();
   }
 }
+
+
