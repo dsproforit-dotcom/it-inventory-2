@@ -134,3 +134,16 @@ body.dark-mode .close:hover { color: #ff5252; }
 body.dark-mode .message.loading { background: #1e2a3b; color: #64b5f6; }
 body.dark-mode .message.success { background: #1b3320; color: #81c784; }
 body.dark-mode .message.error { background: #3b1c1c; color: #e57373; }
+
+/* ეკრანის ძირამდე გამუქება */
+html, body { min-height: 100vh; }
+html { background-color: #f4f7f6; transition: background-color 0.3s; }
+html:has(body.dark-mode) { background-color: #121212; }
+
+/* მობილურის ბარათების გამუქება დარქ მოდში */
+@media (max-width: 768px) {
+  body.dark-mode tr {
+    background-color: #1e1e1e;
+    border-color: #333;
+  }
+}
