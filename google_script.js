@@ -450,4 +450,3 @@ function deleteItemDirectly(data) {
   }
 }
 
-
