@@ -1,11 +1,19 @@
-// 🔴 შენი Google Web App-ის ლინკი!
-const API_URL = "https://script.google.com/macros/s/AKfycbzwxRy2h0t6Rj7ZqJd3FnFbzsyK9s67SdSOoX1kcl_4ndRYEOmVq-x6J3zbZQwS3gsoxQ/exec";
+// 🤖 ტელეგრამში ეკრანის გაშლა
+if (window.Telegram && window.Telegram.WebApp) {
+  window.Telegram.WebApp.ready();
+  window.Telegram.WebApp.expand(); 
+}
 
+// 🔴 შენი Google Web App-ის ლინკი!
+const API_URL = "https://script.google.com/macros/s/AKfycb.../exec"; // (შენი რაცაა ეგ დატოვე)
+
+// 🔒 PIN-ის მოთხოვნა
 let APP_PIN = localStorage.getItem("inventory_pin");
 if (!APP_PIN) {
   APP_PIN = prompt("🔒 Please enter security PIN (e.g., 1234):");
   localStorage.setItem("inventory_pin", APP_PIN);
 }
+// აქედან ქვემოთ შენი ძველი კოდია ჩვეულებრივად...
 
 let fullInventoryData = [];
 let fullHistoryData = [];
