@@ -359,8 +359,12 @@ function doPost(e) {
     const request = JSON.parse(e.postData.contents);
 
     // ტელეგრამიდან შემოსული მოთხოვნა - message ველი მხოლოდ ტელეგრამს აქვს
-    if (request.message) {
-      return handleTelegramCommand(request.message);
+    if (request.message || request.edited_message || request.callback_query) {
+      // ტელეგრამს დაუყოვნებლივ ვუპასუხებთ 200-ით, შემდეგ ვამუშავებთ
+      const msg = request.message || request.edited_message;
+      if (msg) handleTelegramCommand(msg);
+      return ContentService.createTextOutput(JSON.stringify({ ok: true }))
+        .setMimeType(ContentService.MimeType.JSON);
     }
 
     // ჩვეულებრივი საიტიდან შემოსული მოთხოვნა
@@ -610,7 +614,10 @@ function handleTelegramCommand(message) {
     const db = SpreadsheetApp.getActive().getSheetByName(DB_SHEET);
     const rows = db.getDataRange().getValues().slice(1);
     const totalItems = rows.length;
-    const totalQty = rows.reduce((sum, r) => sum + Number(r[4] || 0), 0);
+    const totalQty = rows.reduce((sum, r) => {
+      const qty = parseFloat(r[4]);
+      return sum + (isNaN(qty) ? 0 : qty);
+    }, 0);
     const lowCount = rows.filter(r => r[3] === 'Consumables' && Number(r[4]) <= 3).length;
 
     replyText =
@@ -633,7 +640,7 @@ function handleTelegramCommand(message) {
 function setTelegramWebhook() {
   const token = PropertiesService.getScriptProperties().getProperty('TELEGRAM_TOKEN');
   // პირდაპირ Properties-იდან კითხულობს URL-ს და არა ScriptApp-იდან
-  const webAppUrl = PropertiesService.getScriptProperties().getProperty('WEBAPP_URL');
+  const webAppUrl = PropertiesService.getScriptProperties().getProperty('WORKERS_CLOUDFLARE');
 
   const response = UrlFetchApp.fetch(
     `https://api.telegram.org/bot${token}/setWebhook?url=${webAppUrl}`
