@@ -170,6 +170,13 @@ function addNewItem(data) {
     const noteForHistory = data.notes ? data.notes : '🚫📝  NO TXT  🚫📝';
     logHistory('ADD', newId, data.name, 'N/A', data.location, data.qty, data.resp || 'UNKNOWN', noteForHistory);
 
+    sendTelegramMessage(
+      `➕ <b>NEW ITEM ADDED</b>\n` +
+      `📦 <b>${data.name}</b> [${newId}]\n` +
+      `📍 Location: ${data.location}\n` +
+      `🔢 Quantity: ${data.qty}\n` +
+      `👤 By: ${data.resp || 'UNKNOWN'}`
+    );
     return { success: true, message: "ნივთი წარმატებით დაემატა: " + newId };
 
   } catch (error) {
@@ -261,6 +268,14 @@ function transferItem(data) {
     const historyToLoc = (action === 'TRANSFER') ? toLoc : 'REMOVED/CONSUMED';
     logHistory(action, itemId, itemName, fromLoc, historyToLoc, qty, resp, note);
 
+    const emoji = { TRANSFER: '🔄', ISSUE: '📤', 'WRITE-OFF': '🗑️', RESTOCK: '📥', UPDATE: '✏️' };
+    sendTelegramMessage(
+      `${emoji[action] || '📋'} <b>${action}</b>\n` +
+      `📦 <b>${itemName}</b> [${itemId}]\n` +
+      `📍 ${fromLoc}${action === 'TRANSFER' ? ` ➔ ${toLoc}` : ''}\n` +
+      `🔢 Quantity: ${qty}\n` +
+      `👤 By: ${resp}`
+    );
     return { success: true, message: `✅ ოპერაცია (${action}) წარმატებით შესრულდა!` };
 
   } catch (err) {
@@ -403,6 +418,13 @@ function editExistingItem(data) {
 
     logHistory('UPDATE', itemId, data.name, oldLocation, data.location, data.qty, data.resp || 'UNKNOWN', 'Full Edit via UI');
 
+    sendTelegramMessage(
+      `✏️ <b>ITEM EDITED</b>\n` +
+      `📦 <b>${data.name}</b> [${itemId}]\n` +
+      `📍 Location: ${data.location}\n` +
+      `🔢 Quantity: ${data.qty}\n` +
+      `👤 By: ${data.resp || 'UNKNOWN'}`
+    );
     return { success: true, message: `✅ რიგი განახლდა: ${itemId}` };
   } catch (error) {
     return { success: false, message: error.message };
@@ -442,6 +464,11 @@ function deleteItemDirectly(data) {
 
     logHistory('WRITE-OFF', itemId, itemName, location, 'DELETED', 0, 'SYSTEM', 'Deleted via UI');
 
+    sendTelegramMessage(
+      `🗑️ <b>ITEM DELETED</b>\n` +
+      `📦 <b>${itemName}</b> [${itemId}]\n` +
+      `📍 Was at: ${location}`
+    );
     return { success: true, message: `🗑️ რიგი წაიშალა: ${itemId}` };
   } catch (error) {
     return { success: false, message: error.message };
@@ -450,3 +477,28 @@ function deleteItemDirectly(data) {
   }
 }
 
+
+
+// =========================================================
+// 🤖 TELEGRAM NOTIFICATIONS
+// =========================================================
+function sendTelegramMessage(text) {
+  const token = PropertiesService.getScriptProperties().getProperty('TELEGRAM_TOKEN');
+  const chatId = PropertiesService.getScriptProperties().getProperty('TELEGRAM_CHAT_ID');
+
+  if (!token || !chatId) return;
+
+  try {
+    UrlFetchApp.fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      method: 'post',
+      contentType: 'application/json',
+      payload: JSON.stringify({
+        chat_id: chatId,
+        text: text,
+        parse_mode: 'HTML'
+      })
+    });
+  } catch (e) {
+    console.error("Telegram error: " + e.message);
+  }
+}
