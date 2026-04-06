@@ -228,6 +228,13 @@ function transferItem(data) {
     if (action === 'UPDATE') {
       db.getRange(sourceRow + 1, 9).setValue(note); // ვაახლებთ მხოლოდ Notes (I სვეტი)
       logHistory('UPDATE', itemId, itemName, fromLoc, fromLoc, 0, resp, note);
+      sendTelegramMessage(
+        `✏️ <b>NOTE UPDATED</b>\n` +
+        `📦 <b>${itemName}</b> [${itemId}]\n` +
+        `📍 Location: ${fromLoc}\n` +
+        `📝 Note: ${note || '-'}\n` +
+        `👤 By: ${resp}`
+      );
       return { success: true, message: `✅ ნივთის ინფორმაცია განახლდა!` };
     }
 
@@ -237,6 +244,13 @@ function transferItem(data) {
       // შეგვიძლია ნოუთიც განვაახლოთ დამატებისას
       if (note) db.getRange(sourceRow + 1, 9).setValue(note);
       logHistory('RESTOCK', itemId, itemName, 'SUPPLIER/NEW', fromLoc, qty, resp, note);
+      sendTelegramMessage(
+        `📥 <b>RESTOCK</b>\n` +
+        `📦 <b>${itemName}</b> [${itemId}]\n` +
+        `📍 Location: ${fromLoc}\n` +
+        `🔢 Added: ${qty} (Total: ${currentQty + qty})\n` +
+        `👤 By: ${resp}`
+      );
       return { success: true, message: `✅ მარაგი წარმატებით შეივსო (${qty} ცალი)!` };
     }
 
