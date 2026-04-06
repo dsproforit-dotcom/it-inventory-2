@@ -450,10 +450,13 @@ function deleteItemDirectly(data) {
     let targetRowIndex = -1;
     let itemName = "UNKNOWN";
 
+    // ვეძებთ ნივთს ID-ით და ლოკაციით, ვინახავთ სახელს და რაოდენობას
+    let itemCurrentQty = 0;
     for (let i = 1; i < dbValues.length; i++) {
       if (dbValues[i][1] === itemId && dbValues[i][5] === location) {
         targetRowIndex = i + 1;
         itemName = dbValues[i][2];
+        itemCurrentQty = dbValues[i][4];
         break;
       }
     }
@@ -462,7 +465,8 @@ function deleteItemDirectly(data) {
 
     db.deleteRow(targetRowIndex);
 
-    logHistory('WRITE-OFF', itemId, itemName, location, 'DELETED', 0, data.resp || 'UNKNOWN', 'Deleted via UI');
+    // წაშლა ყოველთვის მთლიანი ჩანაწერის მოცილებაა - ისტორიაში ვინახავთ რამდენიც იყო
+    logHistory('DELETE', itemId, itemName, location, 'DELETED', itemCurrentQty, data.resp || 'UNKNOWN', 'Full record deleted via UI');
 
     sendTelegramMessage(
       `🗑️ <b>ITEM DELETED</b>\n` +

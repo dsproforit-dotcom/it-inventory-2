@@ -186,6 +186,12 @@ h1 {
   /* მუქი წითელი კანტი უფრო შესამჩნევად */
 }
 
+.badge.DELETE {
+  background-color: #6c1c1c;
+  color: white;
+  border: 1px solid #4a0f0f;
+}
+
 .filter-container {
   background: white;
   padding: 20px;

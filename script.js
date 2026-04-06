@@ -516,7 +516,7 @@ async function deleteItem() {
   const itemId = document.getElementById('editId').value;
   const locationToDelete = currentEditOldLocation; // 👈 ვშლით ზუსტად ძველი ლოკაციიდან!
 
-  if (!confirm(`⚠️ ARE YOU SURE you want to DELETE [ ${itemId} ] from [ ${locationToDelete} ]?\n\nThis will remove it from the main database completely.`)) return;
+  if (!confirm(`⚠️ DELETE will permanently remove [ ${itemId} ] from the database!\n\nFor partial quantity removal, use ACTION → WRITE-OFF instead.\n\nAre you sure?`)) return;
 
   const btn = document.getElementById('btnDeleteSubmit');
   btn.innerText = "⏳ Deleting..."; btn.disabled = true;
