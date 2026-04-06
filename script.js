@@ -411,7 +411,7 @@ function downloadCSV() {
   let csvContent = "\ufeffDate,ID,Name,Category,Qty,Location,Warranty,Photo_URL,Note\n";
   currentResults.forEach(row => { let cleanRow = row.map(cell => `"${String(cell).replace(/"/g, '""')}"`); csvContent += cleanRow.join(",") + "\n"; });
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const link = document.createElement("a"); 
-  link.setAttribute("href", url); link.setAttribute("download", `Inventory_Export_${new Date().toLocaleDateString()}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link);
+  link.setAttribute("href", url); link.setAttribute("download", `Inventory_Export_${new Date().toISOString().split('T')[0]}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link);
 }
 
 function downloadHistoryCSV() {
@@ -425,7 +425,7 @@ function downloadHistoryCSV() {
   const url = URL.createObjectURL(blob); 
   const link = document.createElement("a"); 
   link.setAttribute("href", url); 
-  link.setAttribute("download", `History_Export_${new Date().toLocaleDateString()}.csv`); 
+  link.setAttribute("download", `History_Export_${new Date().toISOString().split('T')[0]}.csv`); 
   document.body.appendChild(link); 
   link.click(); 
   document.body.removeChild(link);

@@ -310,7 +310,7 @@ function getDashboardData() {
     if (row[6] && row[6] instanceof Date && row[6] <= nextMonth) expiringWarranties++;
   });
 
-  const recentHistory = historyData.reverse().slice(0, 10).map(row => {
+  const recentHistory = [...historyData].reverse().slice(0, 10).map(row => {
     return {
       date: Utilities.formatDate(new Date(row[0]), Session.getScriptTimeZone(), "MMM dd, HH:mm"),
       itemId: row[1], item: row[2], action: row[3], from: row[4], to: row[5], qty: row[6], user: row[7], note: row[8] || '-'
