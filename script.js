@@ -481,6 +481,7 @@ function openEditModalByIndex(index) {
 
 function closeEditModal() {
   document.getElementById('editModal').style.display = 'none';
+  document.getElementById('editResp').value = '';
 }
 
 async function submitEditItem() {
@@ -494,7 +495,8 @@ async function submitEditItem() {
     location: document.getElementById('editLocation').value, // 👈 ეს შეიძლება შეცვლილი იყოს
     warranty: document.getElementById('editWarranty').value,
     pic: document.getElementById('editPic').value,
-    notes: document.getElementById('editNotes').value
+    notes: document.getElementById('editNotes').value,
+    resp: document.getElementById('editResp').value.trim() || 'UNKNOWN'
   };
 
   if (!payload.name || payload.qty === '' || payload.qty === null) return alert("Name and Qty are required!");

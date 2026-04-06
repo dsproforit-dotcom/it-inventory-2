@@ -401,7 +401,7 @@ function editExistingItem(data) {
       data.name, data.category, data.qty, data.location, data.warranty, data.pic, data.notes
     ]]);
 
-    logHistory('UPDATE', itemId, data.name, oldLocation, data.location, data.qty, 'SYSTEM', 'Full Edit via UI');
+    logHistory('UPDATE', itemId, data.name, oldLocation, data.location, data.qty, data.resp || 'UNKNOWN', 'Full Edit via UI');
 
     return { success: true, message: `✅ რიგი განახლდა: ${itemId}` };
   } catch (error) {
