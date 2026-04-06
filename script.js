@@ -521,7 +521,8 @@ async function deleteItem() {
   const btn = document.getElementById('btnDeleteSubmit');
   btn.innerText = "⏳ Deleting..."; btn.disabled = true;
   try {
-    const response = await fetchAPI("DELETE_ITEM", { itemId: itemId, location: locationToDelete });
+    const resp = document.getElementById('editResp').value.trim() || 'UNKNOWN';
+    const response = await fetchAPI("DELETE_ITEM", { itemId: itemId, location: locationToDelete, resp: resp });
     btn.innerText = "🗑️ Delete"; btn.disabled = false;
     closeEditModal(); showMessage(response.message, 'success');
     fetchFullInventory(); loadDashboardData(); fullHistoryData = [];

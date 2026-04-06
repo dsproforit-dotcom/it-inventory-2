@@ -462,12 +462,13 @@ function deleteItemDirectly(data) {
 
     db.deleteRow(targetRowIndex);
 
-    logHistory('WRITE-OFF', itemId, itemName, location, 'DELETED', 0, 'SYSTEM', 'Deleted via UI');
+    logHistory('WRITE-OFF', itemId, itemName, location, 'DELETED', 0, data.resp || 'UNKNOWN', 'Deleted via UI');
 
     sendTelegramMessage(
       `🗑️ <b>ITEM DELETED</b>\n` +
       `📦 <b>${itemName}</b> [${itemId}]\n` +
-      `📍 Was at: ${location}`
+      `📍 Was at: ${location}\n` +
+      `👤 By: ${data.resp || 'UNKNOWN'}`
     );
     return { success: true, message: `🗑️ რიგი წაიშალა: ${itemId}` };
   } catch (error) {
