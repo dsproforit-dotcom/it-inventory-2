@@ -1,5 +1,5 @@
 // 🔴 შენი Google Web App-ის ლინკი!
-const API_URL = "https://script.google.com/macros/s/AKfycbzwxRy2h0t6Rj7ZqJd3FnFbzsyK9s67SdSOoX1kcl_4ndRYEOmVq-x6J3zbZQwS3gsoxQ/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbyAiZVfIXkAeFMIrkQ7fWNlv8xrsPp4ZVhukIlLZ6iz0JEJfk5AW9IyTJzrsWlbr61ivQ/exec";
 
 let APP_PIN = localStorage.getItem("inventory_pin");
 if (!APP_PIN) {

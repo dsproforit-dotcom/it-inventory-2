@@ -350,12 +350,24 @@ const SECRET_PIN = PropertiesService.getScriptProperties().getProperty('INVENTOR
 
 function doPost(e) {
   try {
+    // თუ e.postData არ არის - ცარიელი პასუხი დავაბრუნოთ
+    if (!e || !e.postData) {
+      return ContentService.createTextOutput(JSON.stringify({ ok: true }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
     const request = JSON.parse(e.postData.contents);
+
+    // ტელეგრამიდან შემოსული მოთხოვნა - message ველი მხოლოდ ტელეგრამს აქვს
+    if (request.message) {
+      return handleTelegramCommand(request.message);
+    }
+
+    // ჩვეულებრივი საიტიდან შემოსული მოთხოვნა
     const action = request.action;
     const payload = request.payload;
-    const incomingPin = request.pin; // 👈 ვიჭერთ საიტიდან გამოგზავნილ პაროლს
+    const incomingPin = request.pin;
 
-    // 🔒 უსაფრთხოების შემოწმება (ბოქლომი)
     if (incomingPin !== SECRET_PIN) {
       throw new Error("წვდომა დაბლოკილია! არასწორი PIN კოდი.");
     }
@@ -487,9 +499,10 @@ function deleteItemDirectly(data) {
 // =========================================================
 // 🤖 TELEGRAM NOTIFICATIONS
 // =========================================================
-function sendTelegramMessage(text) {
+// chatId პარამეტრი სურვილისამებრია - თუ არ მიეწოდება, default chat_id გამოიყენება
+function sendTelegramMessage(text, chatId = null) {
   const token = PropertiesService.getScriptProperties().getProperty('TELEGRAM_TOKEN');
-  const chatId = PropertiesService.getScriptProperties().getProperty('TELEGRAM_CHAT_ID');
+  if (!chatId) chatId = PropertiesService.getScriptProperties().getProperty('TELEGRAM_CHAT_ID');
 
   if (!token || !chatId) return;
 
@@ -507,3 +520,126 @@ function sendTelegramMessage(text) {
     console.error("Telegram error: " + e.message);
   }
 }
+
+
+
+// =========================================================
+// 🤖 TELEGRAM BOT COMMAND HANDLER
+// =========================================================
+function handleTelegramCommand(message) {
+  const chatId = message.chat.id;
+  const text = (message.text || '').trim();
+  const parts = text.split(' ');
+  const command = parts[0].toLowerCase().split('@')[0];
+  const args = parts.slice(1).join(' ').toLowerCase().trim();
+
+  let replyText = '';
+
+  if (command === '/start' || command === '/help') {
+    // დახმარების მენიუ
+    replyText =
+      `🤖 <b>IT Inventory Bot</b>\n\n` +
+      `Available commands:\n\n` +
+      `🔍 /stock [keyword] — search item quantity\n` +
+      `⚠️ /low — all low stock items\n` +
+      `📜 /history — last 10 operations\n` +
+      `📊 /summary — inventory overview`;
+
+  } else if (command === '/stock') {
+    // ნივთის მოძებნა და რაოდენობის ჩვენება
+    if (!args) {
+      replyText = '❌ Please provide a keyword.\nExample: /stock cable';
+    } else {
+      const db = SpreadsheetApp.getActive().getSheetByName(DB_SHEET);
+      const rows = db.getDataRange().getValues().slice(1);
+      const found = rows.filter(r =>
+        String(r[2]).toLowerCase().includes(args) ||
+        String(r[1]).toLowerCase().includes(args)
+      );
+
+      if (found.length === 0) {
+        replyText = `🔍 No items found for: <b>${args}</b>`;
+      } else {
+        replyText = `🔍 Results for: <b>${args}</b>\n\n`;
+        found.forEach(r => {
+          const qty = Number(r[4]);
+          const qtyEmoji = qty <= 1 ? '🔴' : qty <= 3 ? '🟡' : '🟢';
+          replyText += `${qtyEmoji} <b>${r[2]}</b> [${r[1]}]\n`;
+          replyText += `   📍 ${r[5]} — Qty: <b>${qty}</b>\n\n`;
+        });
+      }
+    }
+
+  } else if (command === '/low') {
+    // low stock ნივთების სია
+    const db = SpreadsheetApp.getActive().getSheetByName(DB_SHEET);
+    const rows = db.getDataRange().getValues().slice(1);
+    const lowIT = rows.filter(r => r[3] === 'Consumables' && r[5] === 'IT Warehouse' && Number(r[4]) <= 3);
+    const lowFloor = rows.filter(r => r[3] === 'Consumables' && r[5] === "Floor's Cabinet" && Number(r[4]) <= 1);
+
+    if (lowIT.length === 0 && lowFloor.length === 0) {
+      replyText = '✅ All stock levels are OK!';
+    } else {
+      replyText = '⚠️ <b>Low Stock Alert</b>\n\n';
+      if (lowIT.length > 0) {
+        replyText += '🏭 <b>IT Warehouse (≤3):</b>\n';
+        lowIT.forEach(r => replyText += `  🔴 ${r[2]} — <b>${r[4]}</b> left\n`);
+        replyText += '\n';
+      }
+      if (lowFloor.length > 0) {
+        replyText += `🏢 <b>Floor's Cabinet (≤1):</b>\n`;
+        lowFloor.forEach(r => replyText += `  🔴 ${r[2]} — <b>${r[4]}</b> left\n`);
+      }
+    }
+
+  } else if (command === '/history') {
+    // ბოლო 10 ოპერაცია
+    const sheet = SpreadsheetApp.getActive().getSheetByName(HISTORY_SHEET);
+    const rows = sheet.getDataRange().getValues().slice(1).reverse().slice(0, 10);
+
+    replyText = '📜 <b>Last 10 Operations</b>\n\n';
+    rows.forEach(r => {
+      const date = Utilities.formatDate(new Date(r[0]), Session.getScriptTimeZone(), "MMM dd, HH:mm");
+      replyText += `${date} — <b>${r[3]}</b>\n`;
+      replyText += `  📦 ${r[2]} [${r[1]}]\n`;
+      replyText += `  👤 ${r[7]}\n\n`;
+    });
+
+  } else if (command === '/summary') {
+    // მარაგის მიმოხილვა
+    const db = SpreadsheetApp.getActive().getSheetByName(DB_SHEET);
+    const rows = db.getDataRange().getValues().slice(1);
+    const totalItems = rows.length;
+    const totalQty = rows.reduce((sum, r) => sum + Number(r[4] || 0), 0);
+    const lowCount = rows.filter(r => r[3] === 'Consumables' && Number(r[4]) <= 3).length;
+
+    replyText =
+      `📊 <b>Inventory Summary</b>\n\n` +
+      `📋 Unique items: <b>${totalItems}</b>\n` +
+      `📦 Total quantity: <b>${totalQty}</b>\n` +
+      `⚠️ Low stock items: <b>${lowCount}</b>`;
+
+  } else {
+    replyText = `❓ Unknown command: ${command}\n\nType /help to see available commands.`;
+  }
+
+  // პასუხის გაგზავნა
+  sendTelegramMessage(replyText, chatId);
+
+  return ContentService.createTextOutput(JSON.stringify({ ok: true }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function setTelegramWebhook() {
+  const token = PropertiesService.getScriptProperties().getProperty('TELEGRAM_TOKEN');
+  // პირდაპირ Properties-იდან კითხულობს URL-ს და არა ScriptApp-იდან
+  const webAppUrl = PropertiesService.getScriptProperties().getProperty('WEBAPP_URL');
+
+  const response = UrlFetchApp.fetch(
+    `https://api.telegram.org/bot${token}/setWebhook?url=${webAppUrl}`
+  );
+  console.log(response.getContentText());
+}
+
+
+
