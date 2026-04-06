@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -7,254 +8,324 @@
   <link rel="stylesheet" href="style.css">
   <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
+
 <body>
 
-<div style="text-align: center; margin-bottom: 10px; position: relative;">
-  <button id="themeToggle" onclick="toggleTheme()" style="position: absolute; right: 10px; top: 10px; background: none; border: none; font-size: 26px; cursor: pointer; color: inherit;" title="Toggle Dark Mode">🌙</button>
-  
-  <img src="https://i.ibb.co/LzkKyQFh/logo.png" alt="Logo" style="max-height: 50px;">
-  <h1>IT Inventory System</h1>
-</div>
+  <div style="text-align: center; margin-bottom: 10px; position: relative;">
+    <button id="themeToggle" onclick="toggleTheme()"
+      style="position: absolute; right: 10px; top: 10px; background: none; border: none; font-size: 26px; cursor: pointer; color: inherit;"
+      title="Toggle Dark Mode">🌙</button>
 
-<div class="tabs">
-  <button class="tab-btn active" onclick="switchTab('dashboard')" id="btn-dashboard">📊 Dashboard</button>
-  <button class="tab-btn" onclick="switchTab('inventory')" id="btn-inventory">📦 Inventory</button>
-  <button class="tab-btn" onclick="switchTab('history')" id="btn-history">📜 History</button>
-</div>
-
-<div id="view-dashboard" class="tab-content active">
-  <div id="dash-message" class="message loading">⏳ Loading Dashboard Data...</div>
-  <div class="kpi-container" id="kpi-section" style="display:none;">
-    <div class="kpi-card" onclick="switchTab('inventory'); clearFilters(); search();" title="View Full List">
-      <div class="kpi-info"><span class="kpi-title">Unique Items</span><span class="kpi-value" id="kpi-unique">0</span></div>
-      <div class="kpi-icon">📋</div>
-    </div>
-    <div class="kpi-card success" onclick="switchTab('inventory'); clearFilters(); search();" title="View Full List">
-      <div class="kpi-info"><span class="kpi-title">Total Quantity</span><span class="kpi-value" id="kpi-total">0</span></div>
-      <div class="kpi-icon">📦</div>
-    </div>
-    
-    <div class="kpi-card warning" onclick="filterSpecial('lowStockIT')" title="IT Warehouse Low Stock">
-      <div class="kpi-info"><span class="kpi-title">IT Stock (≤ 3)</span><span class="kpi-value" id="kpi-low-it" style="color: #dc3545;">0</span></div>
-      <div class="kpi-icon">⚠️</div>
-    </div>
-    
-    <div class="kpi-card warning" onclick="filterSpecial('lowStockFloor')" title="Floor's Cabinet Low Stock" style="border-left-color: #fd7e14;">
-      <div class="kpi-info"><span class="kpi-title">Floor Stock (≤ 1)</span><span class="kpi-value" id="kpi-low-floor" style="color: #fd7e14;">0</span></div>
-      <div class="kpi-icon">🏢</div>
-    </div>
+    <img src="https://i.ibb.co/LzkKyQFh/logo.png" alt="Logo" style="max-height: 50px;">
+    <h1>IT Inventory System</h1>
   </div>
-  <div class="recent-activity" id="activity-section" style="display:none;">
-    <h3>⏱️ Recent Activity</h3>
-    <div id="activity-list"></div>
-  </div>
-</div>
 
-<div id="view-inventory" class="tab-content">
-  <div class="filter-container">
-    <div class="filter-group">
-      <label>Search Inventory</label>
-      <div style="display: flex; gap: 5px;">
-        <div class="input-with-icon" style="flex: 1;">
-          <span class="input-icon">🔍</span>
-          <input type="text" id="search" placeholder="Name, ID or Keyword..." onkeyup="search()">
-        </div>
-        <button onclick="startScanner('search')" style="flex: none; min-width: 45px; width: 45px; height: 42px; padding: 0; background: #1a73e8; border-radius: 8px; font-size: 18px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;" title="Scan QR">🔳</button>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('dashboard')" id="btn-dashboard">📊 Dashboard</button>
+    <button class="tab-btn" onclick="switchTab('inventory')" id="btn-inventory">📦 Inventory</button>
+    <button class="tab-btn" onclick="switchTab('history')" id="btn-history">📜 History</button>
+  </div>
+
+  <div id="view-dashboard" class="tab-content active">
+    <div id="dash-message" class="message loading">⏳ Loading Dashboard Data...</div>
+    <div class="kpi-container" id="kpi-section" style="display:none;">
+      <div class="kpi-card" onclick="switchTab('inventory'); clearFilters(); search();" title="View Full List">
+        <div class="kpi-info"><span class="kpi-title">Unique Items</span><span class="kpi-value"
+            id="kpi-unique">0</span></div>
+        <div class="kpi-icon">📋</div>
+      </div>
+      <div class="kpi-card success" onclick="switchTab('inventory'); clearFilters(); search();" title="View Full List">
+        <div class="kpi-info"><span class="kpi-title">Total Quantity</span><span class="kpi-value"
+            id="kpi-total">0</span></div>
+        <div class="kpi-icon">📦</div>
+      </div>
+
+      <div class="kpi-card warning" onclick="filterSpecial('lowStockIT')" title="IT Warehouse Low Stock">
+        <div class="kpi-info"><span class="kpi-title">IT Stock (≤ 3)</span><span class="kpi-value" id="kpi-low-it"
+            style="color: #dc3545;">0</span></div>
+        <div class="kpi-icon">⚠️</div>
+      </div>
+
+      <div class="kpi-card warning" onclick="filterSpecial('lowStockFloor')" title="Floor's Cabinet Low Stock"
+        style="border-left-color: #fd7e14;">
+        <div class="kpi-info"><span class="kpi-title">Floor Stock (≤ 1)</span><span class="kpi-value" id="kpi-low-floor"
+            style="color: #fd7e14;">0</span></div>
+        <div class="kpi-icon">🏢</div>
+      </div>
+
+      <div class="kpi-card" onclick="filterSpecial('warranty')" title="Expiring in 30 days"
+        style="border-left-color: #6f42c1;">
+        <div class="kpi-info"><span class="kpi-title">Warranty Expiring</span><span class="kpi-value" id="kpi-warranty"
+            style="color: #6f42c1;">0</span></div>
+        <div class="kpi-icon">📅</div>
       </div>
     </div>
-    <div class="filter-group">
-      <label>Category</label><select id="filterCategory" onchange="search()"><option value="ALL">All Categories</option></select>
-    </div>
-    <div class="filter-group">
-      <label>Location</label><select id="filterLocation" onchange="search()"><option value="ALL">All Locations</option></select>
-    </div>
-    <div class="filter-group">
-      <label>Date Added</label>
-      <select id="filterDate" onchange="search()">
-        <option value="ALL">All Time</option>
-        <option value="TODAY">Today</option>
-        <option value="WEEK">This Week</option>
-        <option value="MONTH">This Month</option>
-      </select>
-    </div>
-    <div class="button-group">
-      <button onclick="search()" class="btn-search">🔍 Filter</button>
-      <button onclick="clearFilters()" class="btn-clear">🗑️ Clear</button>
-      <button onclick="downloadCSV()" style="background: #00796b;">📥 CSV Export</button>
-    </div>
-    <div class="button-group">
-      <button onclick="openModal()" class="btn-add">➕ Add Item</button>
-      <button onclick="openTransferModal()" class="btn-transfer">🔄 Action</button>
+    <div class="recent-activity" id="activity-section" style="display:none;">
+      <h3>⏱️ Recent Activity</h3>
+      <div id="activity-list"></div>
     </div>
   </div>
 
-  <div id="message" class="message" style="display:none;"></div>
-
-  <div class="table-container">
-    <table>
-      <thead id="tableHead">
-        <tr><th>ID</th><th onclick="sortTable(2)" style="cursor:pointer">Name ↕️</th><th onclick="sortTable(3)" style="cursor:pointer">Category ↕️</th><th onclick="sortTable(4)" style="cursor:pointer">Qty ↕️</th><th onclick="sortTable(5)" style="cursor:pointer">Location ↕️</th><th>Warranty</th><th>Pic</th><th>Note</th><th>Action</th></tr>
-      </thead>
-      <tbody id="resultsBody">
-        <tr><td colspan="9" style="text-align: center;">Loading items...</td></tr>
-      </tbody>
-    </table>
-  </div>
-</div>
-
-<div id="view-history" class="tab-content">
-  <div class="filter-container">
-    <div class="filter-group">
-      <label>Search History</label>
-      <div style="display: flex; gap: 5px;">
-        <div class="input-with-icon" style="flex: 1;">
-          <span class="input-icon">🔍</span>
-          <input type="text" id="historySearch" placeholder="Keywords, ID, User..." onkeyup="searchHistory()">
-        </div>
-        <button onclick="startScanner('historySearch')" style="flex: none; min-width: 45px; width: 45px; height: 42px; padding: 0; background: #6f42c1; border-radius: 8px; font-size: 18px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;" title="Scan QR">🔳</button>
-      </div>
-    </div>
-    <div class="filter-group">
-      <label>Action Type</label>
-      <select id="historyAction" onchange="searchHistory()">
-        <option value="ALL">All Actions</option>
-        <option value="ADD">ADD</option>
-        <option value="TRANSFER">TRANSFER</option>
-        <option value="ISSUE">ISSUE</option>
-        <option value="RESTOCK">RESTOCK</option>
-        <option value="WRITE-OFF">WRITE-OFF</option>
-        <option value="UPDATE">UPDATE</option>
-      </select>
-    </div>
-    <div class="filter-group">
-      <label>Date</label>
-      <select id="historyDate" onchange="searchHistory()">
-        <option value="ALL">All Time</option>
-        <option value="TODAY">Today</option>
-        <option value="WEEK">This Week</option>
-        <option value="MONTH">This Month</option>
-      </select>
-    </div>
-    <div class="button-group">
-      <button onclick="searchHistory()" class="btn-search" style="background: #6f42c1;">🔍 Filter</button>
-      <button onclick="clearHistoryFilters()" class="btn-clear">🗑️ Clear</button>
-      <button onclick="downloadHistoryCSV()" style="background: #00796b;">📥 CSV Export</button>
-    </div>
-  </div>
-
-  <div class="table-container">
-    <table>
-      <thead>
-        <tr><th>Date</th><th>Item ID</th><th>Name</th><th>Action</th><th>From</th><th>To</th><th>Qty</th><th>User</th><th>Note</th></tr>
-      </thead>
-      <tbody id="historyResultsBody">
-        <tr><td colspan="9" style="text-align: center;">Press Filter or switch tab to load history</td></tr>
-      </tbody>
-    </table>
-  </div>
-</div>
-
-<div id="addModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header"><h2>➕ Add New Item</h2><span class="close" onclick="closeModal()">&times;</span></div>
-    <div class="form-group">
-      <label>Item ID</label>
-      <div style="display: flex; gap: 5px;">
-        <div class="input-with-icon" style="flex: 1;">
-          <span class="input-icon">🆔</span>
-          <input type="text" id="addId" placeholder="blank = auto-generated ID">
-        </div>
-        <button type="button" onclick="startScanner('addId')" style="flex: none; min-width: 42px; width: 42px; height: 42px; padding: 0; background: #1a73e8; border-radius: 8px; font-size: 18px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">🔳</button>
-      </div>
-    </div>
-    <div class="form-group"><label>Name *</label><input type="text" id="addName" required placeholder="e.g. Cisco Switch"></div>
-    <div style="display: flex; gap: 15px;">
-      <div class="form-group" style="flex: 1;"><label>Category *</label><select id="addCategory"></select></div>
-      <div class="form-group" style="flex: 1;"><label>Quantity *</label><input type="number" id="addQty" required min="1"></div>
-    </div>
-    <div style="display: flex; gap: 15px;">
-      <div class="form-group" style="flex: 1;"><label>Location *</label><select id="addLocation"></select></div>
-      <div class="form-group" style="flex: 1;"><label>Warranty</label><input type="date" id="addWarranty"></div>
-    </div>
-    <div class="form-group"><label>Picture URL</label><input type="text" id="addPic" placeholder="https://..."></div>
-    <div class="form-group"><label>Notes</label><textarea id="addNotes" placeholder="Additional details..."></textarea></div>
-    <button class="btn-submit" onclick="submitNewItem()" id="submitBtn">Save Item</button>
-  </div>
-</div>
-
-<div id="transferModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header"><h2>🔄 Action</h2><span class="close" onclick="closeTransferModal()">&times;</span></div>
-    <div style="display: flex; gap: 15px;">
-      <div class="form-group" style="flex: 2;">
-        <label>Item ID *</label>
+  <div id="view-inventory" class="tab-content">
+    <div class="filter-container">
+      <div class="filter-group">
+        <label>Search Inventory</label>
         <div style="display: flex; gap: 5px;">
           <div class="input-with-icon" style="flex: 1;">
-            <span class="input-icon">🆔</span><input type="text" id="transItemId" required placeholder="e.g. ITM-ABC">
+            <span class="input-icon">🔍</span>
+            <input type="text" id="search" placeholder="Name, ID or Keyword..." onkeyup="search()">
           </div>
-          <button type="button" onclick="startScanner('transItemId')" style="flex: none; min-width: 45px; width: 45px; height: 42px; padding: 0; background: #1a73e8; border-radius: 8px; font-size: 18px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">🔳</button>
+          <button onclick="startScanner('search')"
+            style="flex: none; min-width: 45px; width: 45px; height: 42px; padding: 0; background: #1a73e8; border-radius: 8px; font-size: 18px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;"
+            title="Scan QR">🔳</button>
         </div>
       </div>
-      <div class="form-group" style="flex: 1;"><label>Qty *</label><input type="number" id="transQty" required min="1"></div>
-    </div>
-    <div style="display: flex; gap: 15px;">
-      <div class="form-group" style="flex: 1;"><label>Action</label>
-        <select id="transAction" onchange="toggleToLocation()">
-          <option value="TRANSFER">TRANSFER</option><option value="ISSUE">ISSUE</option><option value="WRITE-OFF">WRITE-OFF</option><option value="RESTOCK">RESTOCK</option><option value="UPDATE">UPDATE</option>
+      <div class="filter-group">
+        <label>Category</label><select id="filterCategory" onchange="search()">
+          <option value="ALL">All Categories</option>
         </select>
       </div>
-      <div class="form-group" style="flex: 1;"><label>Responsible</label><input type="text" id="transResp"></div>
+      <div class="filter-group">
+        <label>Location</label><select id="filterLocation" onchange="search()">
+          <option value="ALL">All Locations</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Date Added</label>
+        <select id="filterDate" onchange="search()">
+          <option value="ALL">All Time</option>
+          <option value="TODAY">Today</option>
+          <option value="WEEK">This Week</option>
+          <option value="MONTH">This Month</option>
+        </select>
+      </div>
+      <div class="button-group">
+        <button onclick="search()" class="btn-search">🔍 Filter</button>
+        <button onclick="clearFilters()" class="btn-clear">🗑️ Clear</button>
+        <button onclick="downloadCSV()" style="background: #00796b;">📥 CSV Export</button>
+      </div>
+      <div class="button-group">
+        <button onclick="openModal()" class="btn-add">➕ Add Item</button>
+        <button onclick="openTransferModal()" class="btn-transfer">🔄 Action</button>
+      </div>
     </div>
-    <div style="display: flex; gap: 15px;">
-      <div class="form-group" style="flex: 1;"><label id="lblFromLoc">From Location *</label><select id="transFromLoc"></select></div>
-      <div class="form-group" id="toLocContainer" style="flex: 1;"><label>To Location *</label><select id="transToLoc"></select></div>
-    </div>
-    <div class="form-group"><label>Notes</label><textarea id="transNotes" placeholder="Reason..."></textarea></div>
-    <button class="btn-submit" onclick="submitTransfer()" id="btnTransSubmit" style="background: #fd7e14;">Execute Action</button>
-  </div>
-</div>
 
-<div id="scannerModal" class="modal" style="z-index: 2000;" onclick="checkScannerClick(event)">
-  <div class="modal-content" style="text-align: center; padding: 20px;">
-    <h3 style="margin-top:0;">📷 QR Scanner</h3>
-    <div id="qr-reader" style="width: 100%; max-width: 300px; margin: 0 auto 15px auto; border-radius: 8px; overflow: hidden;"></div>
-    <button type="button" onclick="stopScanner()" style="background: #dc3545; width: 100%; padding: 12px; border-radius: 8px; color: white; border: none; font-size: 16px;">Close</button>
-  </div>
-</div>
+    <div id="message" class="message" style="display:none;"></div>
 
-<div id="editModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h2>✏️ Edit Item</h2>
-      <span class="close" onclick="closeEditModal()">&times;</span>
-    </div>
-    
-    <div class="form-group">
-      <label>Item ID (Cannot be changed)</label>
-      <input type="text" id="editId" readonly style="background: #e9ecef; color: #6c757d; font-weight: bold;">
-    </div>
-    <div class="form-group"><label>Name *</label><input type="text" id="editName" required></div>
-    
-    <div style="display: flex; gap: 15px;">
-      <div class="form-group" style="flex: 1;"><label>Category *</label><select id="editCategory"></select></div>
-      <div class="form-group" style="flex: 1;"><label>Quantity *</label><input type="number" id="editQty" required min="0"></div>
-    </div>
-    
-    <div style="display: flex; gap: 15px;">
-      <div class="form-group" style="flex: 1;"><label>Location *</label><select id="editLocation"></select></div>
-      <div class="form-group" style="flex: 1;"><label>Warranty</label><input type="date" id="editWarranty"></div>
-    </div>
-    
-    <div class="form-group"><label>Picture URL</label><input type="text" id="editPic"></div>
-    <div class="form-group"><label>Notes</label><textarea id="editNotes"></textarea></div>
-    
-    <div style="display: flex; gap: 10px; margin-top: 15px;">
-      <button class="btn-submit" onclick="submitEditItem()" id="btnEditSubmit" style="flex: 2; background: #007bff;">💾 Save Changes</button>
-      <button class="btn-submit" onclick="deleteItem()" id="btnDeleteSubmit" style="flex: 1; background: #dc3545;">🗑️ Delete</button>
+    <div class="table-container">
+      <table>
+        <thead id="tableHead">
+          <tr>
+            <th>ID</th>
+            <th onclick="sortTable(2)" style="cursor:pointer">Name ↕️</th>
+            <th onclick="sortTable(3)" style="cursor:pointer">Category ↕️</th>
+            <th onclick="sortTable(4)" style="cursor:pointer">Qty ↕️</th>
+            <th onclick="sortTable(5)" style="cursor:pointer">Location ↕️</th>
+            <th>Warranty</th>
+            <th>Pic</th>
+            <th>Note</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="resultsBody">
+          <tr>
+            <td colspan="9" style="text-align: center;">Loading items...</td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
-</div>
 
-<script src="script.js"></script>
+  <div id="view-history" class="tab-content">
+    <div class="filter-container">
+      <div class="filter-group">
+        <label>Search History</label>
+        <div style="display: flex; gap: 5px;">
+          <div class="input-with-icon" style="flex: 1;">
+            <span class="input-icon">🔍</span>
+            <input type="text" id="historySearch" placeholder="Keywords, ID, User..." onkeyup="searchHistory()">
+          </div>
+          <button onclick="startScanner('historySearch')"
+            style="flex: none; min-width: 45px; width: 45px; height: 42px; padding: 0; background: #6f42c1; border-radius: 8px; font-size: 18px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;"
+            title="Scan QR">🔳</button>
+        </div>
+      </div>
+      <div class="filter-group">
+        <label>Action Type</label>
+        <select id="historyAction" onchange="searchHistory()">
+          <option value="ALL">All Actions</option>
+          <option value="ADD">ADD</option>
+          <option value="TRANSFER">TRANSFER</option>
+          <option value="ISSUE">ISSUE</option>
+          <option value="RESTOCK">RESTOCK</option>
+          <option value="WRITE-OFF">WRITE-OFF</option>
+          <option value="UPDATE">UPDATE</option>
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Date</label>
+        <select id="historyDate" onchange="searchHistory()">
+          <option value="ALL">All Time</option>
+          <option value="TODAY">Today</option>
+          <option value="WEEK">This Week</option>
+          <option value="MONTH">This Month</option>
+        </select>
+      </div>
+      <div class="button-group">
+        <button onclick="searchHistory()" class="btn-search" style="background: #6f42c1;">🔍 Filter</button>
+        <button onclick="clearHistoryFilters()" class="btn-clear">🗑️ Clear</button>
+        <button onclick="downloadHistoryCSV()" style="background: #00796b;">📥 CSV Export</button>
+      </div>
+    </div>
+
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Item ID</th>
+            <th>Name</th>
+            <th>Action</th>
+            <th>From</th>
+            <th>To</th>
+            <th>Qty</th>
+            <th>User</th>
+            <th>Note</th>
+          </tr>
+        </thead>
+        <tbody id="historyResultsBody">
+          <tr>
+            <td colspan="9" style="text-align: center;" class="loading">⏳ Loading history...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div id="addModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>➕ Add New Item</h2><span class="close" onclick="closeModal()">&times;</span>
+      </div>
+      <div class="form-group">
+        <label>Item ID</label>
+        <div style="display: flex; gap: 5px;">
+          <div class="input-with-icon" style="flex: 1;">
+            <span class="input-icon">🆔</span>
+            <input type="text" id="addId" placeholder="blank = auto-generated ID">
+          </div>
+          <button type="button" onclick="startScanner('addId')"
+            style="flex: none; min-width: 42px; width: 42px; height: 42px; padding: 0; background: #1a73e8; border-radius: 8px; font-size: 18px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">🔳</button>
+        </div>
+      </div>
+      <div class="form-group"><label>Name *</label><input type="text" id="addName" required
+          placeholder="e.g. Cisco Switch"></div>
+      <div style="display: flex; gap: 15px;">
+        <div class="form-group" style="flex: 1;"><label>Category *</label><select id="addCategory"></select></div>
+        <div class="form-group" style="flex: 1;"><label>Quantity *</label><input type="number" id="addQty" required
+            min="1"></div>
+      </div>
+      <div style="display: flex; gap: 15px;">
+        <div class="form-group" style="flex: 1;"><label>Location *</label><select id="addLocation"></select></div>
+        <div class="form-group" style="flex: 1;"><label>Warranty</label><input type="date" id="addWarranty"></div>
+      </div>
+      <div class="form-group"><label>Picture URL</label><input type="text" id="addPic" placeholder="https://..."></div>
+      <div class="form-group"><label>Notes</label><textarea id="addNotes"
+          placeholder="Additional details..."></textarea></div>
+      <button class="btn-submit" onclick="submitNewItem()" id="submitBtn">Save Item</button>
+    </div>
+  </div>
+
+  <div id="transferModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>🔄 Action</h2><span class="close" onclick="closeTransferModal()">&times;</span>
+      </div>
+      <div style="display: flex; gap: 15px;">
+        <div class="form-group" style="flex: 2;">
+          <label>Item ID *</label>
+          <div style="display: flex; gap: 5px;">
+            <div class="input-with-icon" style="flex: 1;">
+              <span class="input-icon">🆔</span><input type="text" id="transItemId" required placeholder="e.g. ITM-ABC">
+            </div>
+            <button type="button" onclick="startScanner('transItemId')"
+              style="flex: none; min-width: 45px; width: 45px; height: 42px; padding: 0; background: #1a73e8; border-radius: 8px; font-size: 18px; display: flex; align-items: center; justify-content: center; box-sizing: border-box;">🔳</button>
+          </div>
+        </div>
+        <div class="form-group" style="flex: 1;"><label>Qty *</label><input type="number" id="transQty" required
+            min="1"></div>
+      </div>
+      <div style="display: flex; gap: 15px;">
+        <div class="form-group" style="flex: 1;"><label>Action</label>
+          <select id="transAction" onchange="toggleToLocation()">
+            <option value="TRANSFER">TRANSFER</option>
+            <option value="ISSUE">ISSUE</option>
+            <option value="WRITE-OFF">WRITE-OFF</option>
+            <option value="RESTOCK">RESTOCK</option>
+            <option value="UPDATE">UPDATE</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex: 1;"><label>Responsible</label><input type="text" id="transResp"></div>
+      </div>
+      <div style="display: flex; gap: 15px;">
+        <div class="form-group" style="flex: 1;"><label id="lblFromLoc">From Location *</label><select
+            id="transFromLoc"></select></div>
+        <div class="form-group" id="toLocContainer" style="flex: 1;"><label>To Location *</label><select
+            id="transToLoc"></select></div>
+      </div>
+      <div class="form-group"><label>Notes</label><textarea id="transNotes" placeholder="Reason..."></textarea></div>
+      <button class="btn-submit" onclick="submitTransfer()" id="btnTransSubmit" style="background: #fd7e14;">Execute
+        Action</button>
+    </div>
+  </div>
+
+  <div id="scannerModal" class="modal" style="z-index: 2000;" onclick="checkScannerClick(event)">
+    <div class="modal-content" style="text-align: center; padding: 20px;">
+      <h3 style="margin-top:0;">📷 QR Scanner</h3>
+      <div id="qr-reader"
+        style="width: 100%; max-width: 300px; margin: 0 auto 15px auto; border-radius: 8px; overflow: hidden;"></div>
+      <button type="button" onclick="stopScanner()"
+        style="background: #dc3545; width: 100%; padding: 12px; border-radius: 8px; color: white; border: none; font-size: 16px;">Close</button>
+    </div>
+  </div>
+
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>✏️ Edit Item</h2>
+        <span class="close" onclick="closeEditModal()">&times;</span>
+      </div>
+
+      <div class="form-group">
+        <label>Item ID (Cannot be changed)</label>
+        <input type="text" id="editId" readonly style="background: #e9ecef; color: #6c757d; font-weight: bold;">
+      </div>
+      <div class="form-group"><label>Name *</label><input type="text" id="editName" required></div>
+
+      <div style="display: flex; gap: 15px;">
+        <div class="form-group" style="flex: 1;"><label>Category *</label><select id="editCategory"></select></div>
+        <div class="form-group" style="flex: 1;"><label>Quantity *</label><input type="number" id="editQty" required
+            min="0"></div>
+      </div>
+
+      <div style="display: flex; gap: 15px;">
+        <div class="form-group" style="flex: 1;"><label>Location *</label><select id="editLocation"></select></div>
+        <div class="form-group" style="flex: 1;"><label>Warranty</label><input type="date" id="editWarranty"></div>
+      </div>
+
+      <div class="form-group"><label>Picture URL</label><input type="text" id="editPic"></div>
+      <div class="form-group"><label>Notes</label><textarea id="editNotes"></textarea></div>
+
+      <div style="display: flex; gap: 10px; margin-top: 15px;">
+        <button class="btn-submit" onclick="submitEditItem()" id="btnEditSubmit"
+          style="flex: 2; background: #007bff;">💾 Save Changes</button>
+        <button class="btn-submit" onclick="deleteItem()" id="btnDeleteSubmit" style="flex: 1; background: #dc3545;">🗑️
+          Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
 </body>
+
 </html>

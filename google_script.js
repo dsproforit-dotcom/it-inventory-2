@@ -60,10 +60,10 @@ function searchItems(filters) {
 function getHistory() {
   const sheet = SpreadsheetApp.getActive().getSheetByName(HISTORY_SHEET);
   const data = sheet.getDataRange().getValues().slice(1);
-  
+
   // reverse() ვაკეთებთ, რომ ახალი ჩანაწერები ზემოთ მოექცეს.
   // ძველი .slice(0, 100) წავშალეთ, ახლა მოაქვს აბსოლუტურად ყველაფერი!
-  return formatData(data.reverse()); 
+  return formatData(data.reverse());
 }
 
 // მონაცემების ფორმატირება (თარიღები და null-ები)
@@ -78,20 +78,20 @@ function formatData(data) {
 function getDropdownOptions() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const settingsSheet = ss.getSheetByName('SETTINGS');
-  
+
   // დამცავი მექანიზმი, თუ ფურცელი ვერ იპოვა
-  if (!settingsSheet) return { categories: [], locations: [] }; 
-  
+  if (!settingsSheet) return { categories: [], locations: [] };
+
   const data = settingsSheet.getDataRange().getValues();
   let cats = [];
   let locs = [];
-  
+
   // ციკლს ვიწყებთ 1-დან, რომ პირველი ხაზი (სათაურები) გამოვტოვოთ
   for (let i = 1; i < data.length; i++) {
     if (data[i][0]) cats.push(String(data[i][0]).trim()); // A სვეტი
     if (data[i][1]) locs.push(String(data[i][1]).trim()); // B სვეტი
   }
-  
+
   return { categories: cats, locations: locs };
 }
 
@@ -108,17 +108,17 @@ function logError(itemId, fromLoc, toLoc, qty, responsible, message) {
 
 function autoBackupSystem() {
   // 1. ჩაწერე აქ შენი ფოლდერის ID
-  const folderId = "164eLkbKwXjEE_MbXaOH0oO6SVjXhlHbq"; 
+  const folderId = "164eLkbKwXjEE_MbXaOH0oO6SVjXhlHbq";
   const folder = DriveApp.getFolderById(folderId);
-  
+
   // 2. აიღე მიმდინარე ფაილი
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const fileName = ss.getName();
   const date = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd");
-  
+
   // 3. შექმენი ასლი ფოლდერში
   const backupFile = DriveApp.getFileById(ss.getId()).makeCopy(fileName + "_Backup_" + date, folder);
-  
+
   console.log("Backup Created: " + backupFile.getName());
 }
 
@@ -130,13 +130,13 @@ function addNewItem(data) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const dbSheet = ss.getSheetByName(DB_SHEET);
   const lock = LockService.getScriptLock();
-  
+
   try {
-    lock.waitLock(10000); 
-    
+    lock.waitLock(10000);
+
     // 🔴 1. ლოგიკა ID-სთვის
     let newId = data.itemId;
-    
+
     // თუ ველი ცარიელია, ვაგენერირებთ ავტომატურად
     if (!newId || newId.trim() === "") {
       newId = 'ITM-' + Utilities.getUuid().split('-')[0].toUpperCase();
@@ -147,9 +147,9 @@ function addNewItem(data) {
         throw new Error("ეს ID უკვე არსებობს ბაზაში! გთხოვთ მიუთითოთ სხვა, ან დატოვეთ ველი ცარიელი.");
       }
     }
-    
+
     const timestamp = new Date();
-    
+
     // 2. ვამზადებთ ახალ რიგს
     const newRow = [
       timestamp,          // A: Timestamp
@@ -162,16 +162,16 @@ function addNewItem(data) {
       data.pic,           // H: Picture
       data.notes          // I: Notes
     ];
-    
+
     // 3. ვამატებთ მთავარ ბაზაში
     dbSheet.appendRow(newRow);
-    
+
     // 4. ვამატებთ ისტორიაში
     const noteForHistory = data.notes ? data.notes : '🚫📝  NO TXT  🚫📝';
     logHistory('ADD', newId, data.name, 'N/A', data.location, data.qty, 'SYSTEM', noteForHistory);
-    
+
     return { success: true, message: "ნივთი წარმატებით დაემატა: " + newId };
-    
+
   } catch (error) {
     return { success: false, message: error.message };
   } finally {
@@ -190,7 +190,7 @@ function transferItem(data) {
 
   try {
     lock.waitLock(30000);
-    
+
     const itemId = data.itemId;
     const action = data.action.toUpperCase(); // TRANSFER, ISSUE, WRITE-OFF, RESTOCK ან UPDATE
     const qty = Number(data.qty);
@@ -214,7 +214,7 @@ function transferItem(data) {
       return { success: false, message: "შეცდომა: ნივთი ლოკაციაზე (" + fromLoc + ") არ მოიძებნა!" };
     }
 
-    let itemName = dbValues[sourceRow][2]; 
+    let itemName = dbValues[sourceRow][2];
     const currentQty = Number(dbValues[sourceRow][4]);
 
     // 🔴 ახალი: თუ უბრალოდ ვაფდეითებთ (UPDATE)
@@ -226,9 +226,9 @@ function transferItem(data) {
 
     // 🔴 თუ მარაგს ვავსებთ (RESTOCK)
     if (action === 'RESTOCK') {
-      db.getRange(sourceRow + 1, 5).setValue(currentQty + qty); 
+      db.getRange(sourceRow + 1, 5).setValue(currentQty + qty);
       // შეგვიძლია ნოუთიც განვაახლოთ დამატებისას
-      if(note) db.getRange(sourceRow + 1, 9).setValue(note);
+      if (note) db.getRange(sourceRow + 1, 9).setValue(note);
       logHistory('RESTOCK', itemId, itemName, 'SUPPLIER/NEW', fromLoc, qty, resp, note);
       return { success: true, message: `✅ მარაგი წარმატებით შეივსო (${qty} ცალი)!` };
     }
@@ -245,7 +245,7 @@ function transferItem(data) {
         db.getRange(targetRow + 1, 5).setValue(targetQty + qty);
       } else {
         const newRow = [
-          new Date(), itemId, itemName, dbValues[sourceRow][3], 
+          new Date(), itemId, itemName, dbValues[sourceRow][3],
           qty, toLoc, dbValues[sourceRow][6], dbValues[sourceRow][7], note
         ];
         db.appendRow(newRow);
@@ -276,34 +276,34 @@ function getDashboardData() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const dbData = ss.getSheetByName(DB_SHEET).getDataRange().getValues().slice(1);
   const historyData = ss.getSheetByName(HISTORY_SHEET).getDataRange().getValues().slice(1);
-  
+
   let totalItems = dbData.length;
   let totalQty = 0;
   let lowStockIT = 0;      // 👈 IT საწყობისთვის
   let lowStockFloor = 0;   // 👈 სართულების კარადისთვის
   let expiringWarranties = 0;
-  
+
   const nextMonth = new Date();
   nextMonth.setDate(nextMonth.getDate() + 30);
 
   dbData.forEach(row => {
-    let category = row[3]; 
-    let qty = Number(row[4]); 
-    let location = row[5]; 
+    let category = row[3];
+    let qty = Number(row[4]);
+    let location = row[5];
 
     if (!isNaN(qty)) {
       totalQty += qty;
-      
-      
+
+
       // 💡 ამოწურვის პირას მყოფი ნივთების დათვლა ლოკაციების მიხედვით
       if (category === 'Consumables' && qty >= 0) { // 👈 აქ შევცვალეთ >= 0
         // IT საწყობში ლიმიტი არის 3
         if (location === 'IT Warehouse' && qty <= 3) {
-          lowStockIT++; 
-        } 
+          lowStockIT++;
+        }
         // სართულის კარადაში ლიმიტი არის 1 (ანუ 2-ზე ნაკლები)
         else if (location === "Floor's Cabinet" && qty <= 1) {
-          lowStockFloor++; 
+          lowStockFloor++;
         }
       }
     }
@@ -336,15 +336,15 @@ const SECRET_PIN = PropertiesService.getScriptProperties().getProperty('INVENTOR
 function doPost(e) {
   try {
     const request = JSON.parse(e.postData.contents);
-    const action = request.action; 
-    const payload = request.payload; 
+    const action = request.action;
+    const payload = request.payload;
     const incomingPin = request.pin; // 👈 ვიჭერთ საიტიდან გამოგზავნილ პაროლს
-    
+
     // 🔒 უსაფრთხოების შემოწმება (ბოქლომი)
     if (incomingPin !== SECRET_PIN) {
       throw new Error("წვდომა დაბლოკილია! არასწორი PIN კოდი.");
     }
-    
+
     let result = {};
 
     switch (action) {
@@ -358,10 +358,10 @@ function doPost(e) {
       case "DELETE_ITEM": result = deleteItemDirectly(payload); break; // 👈 ახალი
       default: throw new Error("უცნობი ბრძანება (Action): " + action);
     }
-    
+
     return ContentService.createTextOutput(JSON.stringify({ success: true, data: result }))
       .setMimeType(ContentService.MimeType.JSON);
-      
+
   } catch (error) {
     return ContentService.createTextOutput(JSON.stringify({ success: false, message: error.toString() }))
       .setMimeType(ContentService.MimeType.JSON);
@@ -376,15 +376,15 @@ function editExistingItem(data) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const db = ss.getSheetByName(DB_SHEET);
   const lock = LockService.getScriptLock();
-  
+
   try {
-    lock.waitLock(10000); 
+    lock.waitLock(10000);
     const itemId = data.itemId;
     const oldLocation = data.oldLocation; // 👈 ვიჭერთ ძველ ლოკაციას
     const dbValues = db.getDataRange().getValues();
-    
+
     let targetRowIndex = -1;
-    
+
     // ვეძებთ ID-ით და ძველი ლოკაციით ერთდროულად!
     for (let i = 1; i < dbValues.length; i++) {
       if (dbValues[i][1] === itemId && dbValues[i][5] === oldLocation) {
@@ -392,17 +392,17 @@ function editExistingItem(data) {
         break;
       }
     }
-    
+
     if (targetRowIndex === -1) throw new Error("Item not found in the specified location.");
 
     // ვააფდეითებთ მონაცემებს ამ რიგში
-    const range = db.getRange(targetRowIndex, 3, 1, 7); 
+    const range = db.getRange(targetRowIndex, 3, 1, 7);
     range.setValues([[
       data.name, data.category, data.qty, data.location, data.warranty, data.pic, data.notes
     ]]);
-    
+
     logHistory('UPDATE', itemId, data.name, oldLocation, data.location, data.qty, 'SYSTEM', 'Full Edit via UI');
-    
+
     return { success: true, message: `✅ რიგი განახლდა: ${itemId}` };
   } catch (error) {
     return { success: false, message: error.message };
@@ -418,13 +418,13 @@ function deleteItemDirectly(data) {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const db = ss.getSheetByName(DB_SHEET);
   const lock = LockService.getScriptLock();
-  
+
   try {
-    lock.waitLock(10000); 
+    lock.waitLock(10000);
     const itemId = data.itemId;
     const location = data.location;
     const dbValues = db.getDataRange().getValues();
-    
+
     let targetRowIndex = -1;
     let itemName = "UNKNOWN";
 
@@ -435,13 +435,13 @@ function deleteItemDirectly(data) {
         break;
       }
     }
-    
+
     if (targetRowIndex === -1) throw new Error("Item not found or location mismatch.");
 
     db.deleteRow(targetRowIndex);
-    
+
     logHistory('WRITE-OFF', itemId, itemName, location, 'DELETED', 0, 'SYSTEM', 'Deleted via UI');
-    
+
     return { success: true, message: `🗑️ რიგი წაიშალა: ${itemId}` };
   } catch (error) {
     return { success: false, message: error.message };

@@ -21,7 +21,7 @@ async function fetchAPI(actionName, payloadData = {}) {
       method: 'POST',
       redirect: 'follow',
       headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ action: actionName, payload: payloadData, pin: APP_PIN }) 
+      body: JSON.stringify({ action: actionName, payload: payloadData, pin: APP_PIN })
     });
     const result = await response.json();
     if (!result.success) {
@@ -38,7 +38,7 @@ async function fetchAPI(actionName, payloadData = {}) {
   }
 }
 
-window.onload = async function() {
+window.onload = async function () {
   loadDashboardData();
   try {
     const options = await fetchAPI("GET_DROPDOWNS");
@@ -51,12 +51,12 @@ window.onload = async function() {
 
 async function fetchFullInventory() {
   const messageDiv = document.getElementById('message');
-  messageDiv.style.display = 'block'; messageDiv.className = 'message loading'; 
+  messageDiv.style.display = 'block'; messageDiv.className = 'message loading';
   messageDiv.innerText = '⏳ Loading Database...';
   try {
     fullInventoryData = await fetchAPI("SEARCH_ITEMS", { query: '', category: 'ALL', location: 'ALL', limit: 'ALL' });
     search();
-  } catch(e) {
+  } catch (e) {
     displayError(e);
   }
 }
@@ -71,9 +71,15 @@ function switchTab(tabName) {
   });
   document.getElementById('view-' + tabName).classList.add('active');
   document.getElementById('btn-' + tabName).classList.add('active');
-  
-  if(tabName === 'dashboard') loadDashboardData();
-  if(tabName === 'history' && fullHistoryData.length === 0) loadHistoryData();
+
+  if (tabName === 'dashboard') loadDashboardData();
+  if (tabName === 'history') {
+    if (fullHistoryData.length === 0) {
+      loadHistoryData();
+    } else {
+      searchHistory(); // უკვე ჩატვირთულია, უბრალოდ ხელახლა დახატე
+    }
+  }
 }
 
 async function loadDashboardData() {
@@ -86,15 +92,16 @@ async function loadDashboardData() {
     document.getElementById('dash-message').style.display = 'none';
     document.getElementById('kpi-unique').innerText = data.totalItems;
     document.getElementById('kpi-total').innerText = data.totalQty;
-    
+
     // 🔴 აი, ძველი ხაზის მაგივრად ეს ორი ახალი ჩაჯდა აქ:
     document.getElementById('kpi-low-it').innerText = data.lowStockIT;
     document.getElementById('kpi-low-floor').innerText = data.lowStockFloor;
-    
+    document.getElementById('kpi-warranty').innerText = data.expiringWarranties;
+
     const actList = document.getElementById('activity-list');
     let actHtml = '<div class="table-container"><table style="margin:0;">';
     actHtml += '<thead><tr><th>Date</th><th>Action</th><th>Item</th><th>Qty</th><th>Route</th><th>Note</th></tr></thead><tbody>';
-    
+
     data.recentHistory.forEach(r => {
       let route = "";
       if (r.action === 'ADD' || r.action === 'RESTOCK') route = `➔ ${r.to}`;
@@ -113,7 +120,7 @@ async function loadDashboardData() {
     });
     actHtml += '</tbody></table></div>';
     actList.innerHTML = actHtml || "<i style='color:#7f8c8d;'>No recent activity found...</i>";
-    
+
     document.getElementById('kpi-section').style.display = 'grid';
     document.getElementById('activity-section').style.display = 'block';
   } catch (e) {
@@ -155,7 +162,7 @@ function search() {
     const matchQ = searchTerms.every(term => searchableText.includes(term));
     const matchCat = (cat === 'ALL') ? true : (row[3] === cat);
     const matchLoc = (loc === 'ALL') ? true : (row[5] === loc);
-    
+
     let matchDate = true;
     if (dateFilter !== 'ALL') {
       const rowDate = new Date(row[0]);
@@ -173,7 +180,7 @@ function displayResults(results) {
   currentResults = results;
   const messageDiv = document.getElementById('message');
   const tbody = document.getElementById('resultsBody');
-  
+
   if (!results || results.length === 0) {
     messageDiv.innerHTML = '🔍 No items match these filters'; messageDiv.className = 'message error'; messageDiv.style.display = 'block';
     tbody.innerHTML = '<tr><td colspan="9" style="text-align: center;">No items found</td></tr>'; return;
@@ -181,22 +188,22 @@ function displayResults(results) {
 
   messageDiv.innerHTML = `✅ Found ${results.length} items`; messageDiv.className = 'message success'; messageDiv.style.display = 'block';
   let html = '';
-  
+
   results.forEach((row, index) => {
     let photoHtml = (row[7] && row[7].toString().startsWith('http')) ? `<a href="${row[7]}" target="_blank">🖼️</a>` : (row[7] || '-');
-    
+
     // ვქმნით ღილაკს, რომელიც ინდექსს გადასცემს ფუნქციას და არა მთლიან ტექსტს
     html += `<tr>
-      <td data-label="ID"><strong>${row[1]}</strong></td>
-      <td data-label="Name">${row[2]}</td>
-      <td data-label="Category">${row[3]}</td>
-      <td data-label="Qty">${row[4]}</td>
-      <td data-label="Location">${row[5]}</td>
-      <td data-label="Warranty">${row[6]}</td>
+      <td data-label="ID"><strong>${escapeHtml(row[1])}</strong></td>
+      <td data-label="Name">${escapeHtml(row[2])}</td>
+      <td data-label="Category">${escapeHtml(row[3])}</td>
+      <td data-label="Qty">${escapeHtml(row[4])}</td>
+      <td data-label="Location">${escapeHtml(row[5])}</td>
+      <td data-label="Warranty">${escapeHtml(row[6])}</td>
       <td data-label="Pic">${photoHtml}</td>
-      <td data-label="Note">${row[8] || '-'}</td>
+      <td data-label="Note">${escapeHtml(row[8]) || '-'}</td>
       <td data-label="Action" style="display:flex; gap:5px;">
-        <button class="copy-btn" onclick="copyId('${row[1]}', this)" style="flex:1;">📋</button>
+        <button class="copy-btn" onclick="copyId('${escapeHtml(row[1])}', this)" style="flex:1;">📋</button>
         <button class="copy-btn" onclick="openEditModalByIndex(${index})" style="flex:1; background:#007bff; color:white; border-color:#007bff;">✏️</button>
       </td>
     </tr>`;
@@ -205,28 +212,38 @@ function displayResults(results) {
 }
 
 function clearFilters() {
-  document.getElementById('search').value = ''; 
-  document.getElementById('filterCategory').value = 'ALL'; 
-  document.getElementById('filterLocation').value = 'ALL'; 
-  document.getElementById('filterDate').value = 'ALL'; 
+  document.getElementById('search').value = '';
+  document.getElementById('filterCategory').value = 'ALL';
+  document.getElementById('filterLocation').value = 'ALL';
+  document.getElementById('filterDate').value = 'ALL';
   search();
 }
 
 function filterSpecial(type) {
   switchTab('inventory');
-  
+
   // 🛑 clearFilters()-ის მაგივრად ფილტრებს "ჩუმად" ვასუფთავებთ, რომ ორჯერ არ დახატოს ცხრილი
-  document.getElementById('search').value = ''; 
-  document.getElementById('filterCategory').value = 'ALL'; 
-  document.getElementById('filterLocation').value = 'ALL'; 
-  document.getElementById('filterDate').value = 'ALL'; 
-  
+  document.getElementById('search').value = '';
+  document.getElementById('filterCategory').value = 'ALL';
+  document.getElementById('filterLocation').value = 'ALL';
+  document.getElementById('filterDate').value = 'ALL';
+
   if (type === 'lowStockIT') {
     let results = fullInventoryData.filter(row => row[3] === 'Consumables' && row[5] === 'IT Warehouse' && Number(row[4]) >= 0 && Number(row[4]) <= 3);
     displayResults(results);
-  } 
+  }
   else if (type === 'lowStockFloor') {
     let results = fullInventoryData.filter(row => row[3] === 'Consumables' && row[5] === "Floor's Cabinet" && Number(row[4]) >= 0 && Number(row[4]) <= 1);
+    displayResults(results);
+  }
+  else if (type === 'warranty') {
+    const soon = new Date();
+    soon.setDate(soon.getDate() + 30);
+    let results = fullInventoryData.filter(row => {
+      if (!row[6] || row[6] === '-' || row[6] === '') return false;
+      const warDate = new Date(row[6]);
+      return !isNaN(warDate) && warDate <= soon;
+    });
     displayResults(results);
   }
 }
@@ -260,7 +277,7 @@ function searchHistory() {
     const searchableText = row.slice(1).join(' ').toLowerCase();
     const matchQ = searchTerms.every(term => searchableText.includes(term));
     const matchAction = (actionType === 'ALL') ? true : (row[3] === actionType);
-    
+
     let matchDate = true;
     if (dateFilter !== 'ALL') {
       const rowDate = new Date(row[0]);
@@ -282,18 +299,18 @@ function drawHistoryTable(data) {
     return;
   }
   let html = '';
-  data.forEach(row => { 
+  data.forEach(row => {
     html += `<tr>
-      <td data-label="Date" style="font-size:12px; color:#555;">${row[0]}</td>
-      <td data-label="Item ID"><strong>${row[1]}</strong></td>
-      <td data-label="Name">${row[2]}</td>
-      <td data-label="Action"><span class="badge ${row[3]}">${row[3]}</span></td>
-      <td data-label="From">${row[4]}</td>
-      <td data-label="To">${row[5]}</td>
-      <td data-label="Qty">${row[6]}</td>
-      <td data-label="User">${row[7]}</td>
-      <td data-label="Note">${row[8] || '-'}</td>
-    </tr>`; 
+      <td data-label="Date" style="font-size:12px; color:#555;">${escapeHtml(row[0])}</td>
+      <td data-label="Item ID"><strong>${escapeHtml(row[1])}</strong></td>
+      <td data-label="Name">${escapeHtml(row[2])}</td>
+      <td data-label="Action"><span class="badge ${escapeHtml(row[3])}">${escapeHtml(row[3])}</span></td>
+      <td data-label="From">${escapeHtml(row[4])}</td>
+      <td data-label="To">${escapeHtml(row[5])}</td>
+      <td data-label="Qty">${escapeHtml(row[6])}</td>
+      <td data-label="User">${escapeHtml(row[7])}</td>
+      <td data-label="Note">${escapeHtml(row[8]) || '-'}</td>
+    </tr>`;
   });
   tbody.innerHTML = html;
 }
@@ -309,18 +326,18 @@ function clearHistoryFilters() {
 // ➕ ADD & 🔄 ACTION (MODALS)
 // =========================================================
 function openModal() { document.getElementById('addModal').style.display = 'block'; }
-function closeModal() { document.getElementById('addModal').style.display = 'none'; ['addId', 'addName', 'addQty', 'addWarranty', 'addPic', 'addNotes'].forEach(id => document.getElementById(id).value = ''); }
+function closeModal() { document.getElementById('addModal').style.display = 'none';['addId', 'addName', 'addQty', 'addWarranty', 'addPic', 'addNotes'].forEach(id => document.getElementById(id).value = ''); }
 
 async function submitNewItem() {
-  const btn = document.getElementById('submitBtn'); 
+  const btn = document.getElementById('submitBtn');
   const customId = document.getElementById('addId').value.trim();
-  const name = document.getElementById('addName').value.trim(); 
+  const name = document.getElementById('addName').value.trim();
   const qty = document.getElementById('addQty').value.trim();
-  
-  if(!name || !qty) return alert("Please fill Name and Quantity!");
-  
+
+  if (!name || !qty) return alert("Please fill Name and Quantity!");
+
   const payload = { itemId: customId, name: name, category: document.getElementById('addCategory').value, qty: qty, location: document.getElementById('addLocation').value, warranty: document.getElementById('addWarranty').value, pic: document.getElementById('addPic').value, notes: document.getElementById('addNotes').value };
-  
+
   btn.innerText = "⏳ Saving..."; btn.disabled = true;
   try {
     const response = await fetchAPI("ADD_ITEM", payload);
@@ -332,21 +349,21 @@ async function submitNewItem() {
 }
 
 function openTransferModal() { document.getElementById('transferModal').style.display = 'block'; }
-function closeTransferModal() { document.getElementById('transferModal').style.display = 'none'; ['transItemId', 'transQty', 'transResp', 'transNotes'].forEach(id => document.getElementById(id).value = ''); document.getElementById('transAction').value = 'TRANSFER'; toggleToLocation(); }
+function closeTransferModal() { document.getElementById('transferModal').style.display = 'none';['transItemId', 'transQty', 'transResp', 'transNotes'].forEach(id => document.getElementById(id).value = ''); document.getElementById('transAction').value = 'TRANSFER'; toggleToLocation(); }
 
-function toggleToLocation() { 
-  const action = document.getElementById('transAction').value; 
-  document.getElementById('toLocContainer').style.display = (action === 'TRANSFER') ? 'block' : 'none'; 
+function toggleToLocation() {
+  const action = document.getElementById('transAction').value;
+  document.getElementById('toLocContainer').style.display = (action === 'TRANSFER') ? 'block' : 'none';
   const lblFrom = document.getElementById('lblFromLoc');
-  if(lblFrom) lblFrom.innerText = (action === 'RESTOCK') ? 'Add To Location *' : 'From Location *';
+  if (lblFrom) lblFrom.innerText = (action === 'RESTOCK') ? 'Add To Location *' : 'From Location *';
 }
 
 async function submitTransfer() {
   const btn = document.getElementById('btnTransSubmit'); const itemId = document.getElementById('transItemId').value.trim(); const qty = document.getElementById('transQty').value.trim(); const fromLoc = document.getElementById('transFromLoc').value; const action = document.getElementById('transAction').value; const toLoc = (action === 'TRANSFER') ? document.getElementById('transToLoc').value : 'N/A';
-  if(!itemId || !qty) return alert("Please fill Item ID and Quantity!");
-  if(action === 'TRANSFER' && fromLoc === toLoc) return alert("Locations cannot be the same!");
+  if (!itemId || !qty) return alert("Please fill Item ID and Quantity!");
+  if (action === 'TRANSFER' && fromLoc === toLoc) return alert("Locations cannot be the same!");
   const payload = { itemId: itemId, action: action, qty: qty, resp: document.getElementById('transResp').value, fromLoc: fromLoc, toLoc: toLoc, note: document.getElementById('transNotes').value };
-  
+
   btn.innerText = "⏳ Processing..."; btn.disabled = true;
   try {
     const response = await fetchAPI("TRANSFER_ITEM", payload);
@@ -389,7 +406,7 @@ function stopScanner() {
 }
 
 function checkScannerClick(e) { if (e.target.id === 'scannerModal') stopScanner(); }
-window.addEventListener('click', function(event) {
+window.addEventListener('click', function (event) {
   if (event.target === document.getElementById('addModal')) closeModal();
   if (event.target === document.getElementById('transferModal')) closeTransferModal();
   if (event.target === document.getElementById('editModal')) closeEditModal();
@@ -410,24 +427,24 @@ function downloadCSV() {
   if (!currentResults || currentResults.length === 0) return alert("No data to export!");
   let csvContent = "\ufeffDate,ID,Name,Category,Qty,Location,Warranty,Photo_URL,Note\n";
   currentResults.forEach(row => { let cleanRow = row.map(cell => `"${String(cell).replace(/"/g, '""')}"`); csvContent += cleanRow.join(",") + "\n"; });
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const link = document.createElement("a"); 
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const link = document.createElement("a");
   link.setAttribute("href", url); link.setAttribute("download", `Inventory_Export_${new Date().toISOString().split('T')[0]}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link);
 }
 
 function downloadHistoryCSV() {
   if (!currentHistoryResults || currentHistoryResults.length === 0) return alert("No history data to export!");
   let csvContent = "\ufeffDate,Item ID,Name,Action,From,To,Qty,User,Note\n";
-  currentHistoryResults.forEach(row => { 
-    let cleanRow = row.map(cell => `"${String(cell).replace(/"/g, '""')}"`); 
-    csvContent += cleanRow.join(",") + "\n"; 
+  currentHistoryResults.forEach(row => {
+    let cleanRow = row.map(cell => `"${String(cell).replace(/"/g, '""')}"`);
+    csvContent += cleanRow.join(",") + "\n";
   });
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); 
-  const url = URL.createObjectURL(blob); 
-  const link = document.createElement("a"); 
-  link.setAttribute("href", url); 
-  link.setAttribute("download", `History_Export_${new Date().toISOString().split('T')[0]}.csv`); 
-  document.body.appendChild(link); 
-  link.click(); 
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `History_Export_${new Date().toISOString().split('T')[0]}.csv`);
+  document.body.appendChild(link);
+  link.click();
   document.body.removeChild(link);
 }
 
@@ -439,19 +456,19 @@ let currentEditOldLocation = ""; // 👈 ეს არის ჩვენი მ
 function openEditModalByIndex(index) {
   const row = currentResults[index];
   currentEditOldLocation = row[5]; // 👈 ვინახავთ ძველ ლოკაციას
-  
+
   document.getElementById('editId').value = row[1];
   document.getElementById('editName').value = row[2];
   document.getElementById('editCategory').value = row[3];
   document.getElementById('editQty').value = row[4];
   document.getElementById('editLocation').value = row[5];
-  
+
   let rawDate = row[6];
-  if(rawDate && rawDate !== '-' && rawDate !== '') {
-    try { 
+  if (rawDate && rawDate !== '-' && rawDate !== '') {
+    try {
       let d = new Date(rawDate);
       document.getElementById('editWarranty').value = d.toISOString().split('T')[0];
-    } catch(e) { document.getElementById('editWarranty').value = ''; }
+    } catch (e) { document.getElementById('editWarranty').value = ''; }
   } else {
     document.getElementById('editWarranty').value = '';
   }
@@ -480,13 +497,13 @@ async function submitEditItem() {
     notes: document.getElementById('editNotes').value
   };
 
-  if(!payload.name || payload.qty === '') return alert("Name and Qty are required!");
+  if (!payload.name || payload.qty === '' || payload.qty === null) return alert("Name and Qty are required!");
 
   btn.innerText = "⏳ Saving..."; btn.disabled = true;
   try {
     const response = await fetchAPI("EDIT_ITEM", payload);
     btn.innerText = "💾 Save Changes"; btn.disabled = false;
-    closeEditModal(); showMessage(response.message, 'success'); 
+    closeEditModal(); showMessage(response.message, 'success');
     fetchFullInventory(); loadDashboardData(); fullHistoryData = [];
   } catch (e) {
     btn.innerText = "💾 Save Changes"; btn.disabled = false; alert("Error: " + e.message);
@@ -497,14 +514,14 @@ async function deleteItem() {
   const itemId = document.getElementById('editId').value;
   const locationToDelete = currentEditOldLocation; // 👈 ვშლით ზუსტად ძველი ლოკაციიდან!
 
-  if(!confirm(`⚠️ ARE YOU SURE you want to DELETE [ ${itemId} ] from [ ${locationToDelete} ]?\n\nThis will remove it from the main database completely.`)) return;
+  if (!confirm(`⚠️ ARE YOU SURE you want to DELETE [ ${itemId} ] from [ ${locationToDelete} ]?\n\nThis will remove it from the main database completely.`)) return;
 
   const btn = document.getElementById('btnDeleteSubmit');
   btn.innerText = "⏳ Deleting..."; btn.disabled = true;
   try {
     const response = await fetchAPI("DELETE_ITEM", { itemId: itemId, location: locationToDelete });
     btn.innerText = "🗑️ Delete"; btn.disabled = false;
-    closeEditModal(); showMessage(response.message, 'success'); 
+    closeEditModal(); showMessage(response.message, 'success');
     fetchFullInventory(); loadDashboardData(); fullHistoryData = [];
   } catch (e) {
     btn.innerText = "🗑️ Delete"; btn.disabled = false; alert("Error: " + e.message);
@@ -525,7 +542,7 @@ if (localStorage.getItem('theme') === 'dark') {
 function toggleTheme() {
   document.body.classList.toggle('dark-mode');
   const btn = document.getElementById('themeToggle');
-  
+
   if (document.body.classList.contains('dark-mode')) {
     localStorage.setItem('theme', 'dark'); // ვიმახსოვრებთ მუქს
     btn.innerText = '☀️'; // მზის იკონკა გასათიშად
@@ -533,4 +550,14 @@ function toggleTheme() {
     localStorage.setItem('theme', 'light'); // ვიმახსოვრებთ ნათელს
     btn.innerText = '🌙'; // მთვარის იკონკა ჩასართავად
   }
+}
+
+function escapeHtml(text) {
+  if (text === null || text === undefined) return '';
+  return String(text)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 }
