@@ -559,6 +559,7 @@ function handleTelegramCommand(message) {
       `🤖 <b>IT Inventory Bot</b>\n\n` +
       `Available commands:\n\n` +
       `🔍 /stock [keyword] — search item quantity\n` +
+      `📋 /track [keyword] — full history of an item\n` +
       `⚠️ /low — all low stock items\n` +
       `📜 /history — last 10 operations\n` +
       `📊 /summary — inventory overview`;
@@ -622,6 +623,44 @@ function handleTelegramCommand(message) {
       replyText += `  📦 ${r[2]} [${r[1]}]\n`;
       replyText += `  👤 ${r[7]}\n\n`;
     });
+
+  } else if (command === '/track') {
+    // ნივთის სრული ისტორია საკვანძო სიტყვით
+    if (!args) {
+      replyText = '❌ Please provide a keyword.\nExample: /track mouse';
+    } else {
+      const sheet = SpreadsheetApp.getActive().getSheetByName(HISTORY_SHEET);
+      const rows = sheet.getDataRange().getValues().slice(1);
+
+      // ვეძებთ ყველა ჩანაწერში სადაც args ფიგურირებს
+      const found = rows.filter(r =>
+        String(r[1]).toLowerCase().includes(args) || // Item ID
+        String(r[2]).toLowerCase().includes(args)    // Name
+      );
+
+      if (found.length === 0) {
+        replyText = `🔍 No history found for: <b>${args}</b>`;
+      } else {
+        replyText = `📋 <b>History for "${args}"</b> (${found.length} records)\n\n`;
+
+        // უახლესი ზემოთ
+        [...found].reverse().slice(0, 20).forEach(r => {
+          const date = Utilities.formatDate(new Date(r[0]), Session.getScriptTimeZone(), "MMM dd, HH:mm");
+          const emoji = { ADD: '➕', TRANSFER: '🔄', ISSUE: '📤', 'WRITE-OFF': '🗑️', RESTOCK: '📥', UPDATE: '✏️', DELETE: '❌', ERROR: '⚠️' };
+          replyText += `${emoji[r[3]] || '📋'} <b>${r[3]}</b> — ${date}\n`;
+          replyText += `  📦 ${r[2]} [${r[1]}]\n`;
+          replyText += `  📍 ${r[4]}${r[5] && r[5] !== 'N/A' && r[5] !== r[4] ? ` ➔ ${r[5]}` : ''}\n`;
+          replyText += `  🔢 Qty: ${r[6]} | 👤 ${r[7]}\n`;
+          if (r[8] && r[8] !== '-') replyText += `  📝 ${r[8]}\n`;
+          replyText += '\n';
+        });
+
+        // თუ 20-ზე მეტია - გვაცნობოს
+        if (found.length > 20) {
+          replyText += `\n... and ${found.length - 20} more records`;
+        }
+      }
+    }  
 
   } else if (command === '/summary') {
     // მარაგის მიმოხილვა
