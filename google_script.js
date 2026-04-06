@@ -168,7 +168,7 @@ function addNewItem(data) {
 
     // 4. ვამატებთ ისტორიაში
     const noteForHistory = data.notes ? data.notes : '🚫📝  NO TXT  🚫📝';
-    logHistory('ADD', newId, data.name, 'N/A', data.location, data.qty, 'SYSTEM', noteForHistory);
+    logHistory('ADD', newId, data.name, 'N/A', data.location, data.qty, data.resp || 'UNKNOWN', noteForHistory);
 
     return { success: true, message: "ნივთი წარმატებით დაემატა: " + newId };
 

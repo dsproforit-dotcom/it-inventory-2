@@ -326,7 +326,7 @@ function clearHistoryFilters() {
 // ➕ ADD & 🔄 ACTION (MODALS)
 // =========================================================
 function openModal() { document.getElementById('addModal').style.display = 'block'; }
-function closeModal() { document.getElementById('addModal').style.display = 'none';['addId', 'addName', 'addQty', 'addWarranty', 'addPic', 'addNotes'].forEach(id => document.getElementById(id).value = ''); }
+function closeModal() { document.getElementById('addModal').style.display = 'none';['addId', 'addName', 'addQty', 'addWarranty', 'addPic', 'addNotes', 'addResp'].forEach(id => document.getElementById(id).value = ''); }
 
 async function submitNewItem() {
   const btn = document.getElementById('submitBtn');
@@ -336,7 +336,7 @@ async function submitNewItem() {
 
   if (!name || !qty) return alert("Please fill Name and Quantity!");
 
-  const payload = { itemId: customId, name: name, category: document.getElementById('addCategory').value, qty: qty, location: document.getElementById('addLocation').value, warranty: document.getElementById('addWarranty').value, pic: document.getElementById('addPic').value, notes: document.getElementById('addNotes').value };
+  const payload = { itemId: customId, name: name, category: document.getElementById('addCategory').value, qty: qty, location: document.getElementById('addLocation').value, warranty: document.getElementById('addWarranty').value, pic: document.getElementById('addPic').value, notes: document.getElementById('addNotes').value, resp: document.getElementById('addResp').value.trim() || 'UNKNOWN' };
 
   btn.innerText = "⏳ Saving..."; btn.disabled = true;
   try {
