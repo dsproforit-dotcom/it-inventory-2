@@ -547,6 +547,15 @@ function sendTelegramMessage(text, chatId = null) {
 function handleTelegramCommand(message) {
   const chatId = message.chat.id;
   const text = (message.text || '').trim();
+  // 🔒 წვდომის შემოწმება - მხოლოდ დაშვებული chat ID-ები
+  const allowedChats = PropertiesService.getScriptProperties()
+    .getProperty('ALLOWED_CHAT_IDS') || '';
+  const allowedList = allowedChats.split(',').map(id => id.trim());
+
+  if (!allowedList.includes(String(chatId))) {
+    sendTelegramMessage('🚫 Access denied.', chatId);
+    return;
+  }
   const parts = text.split(' ');
   const command = parts[0].toLowerCase().split('@')[0];
   const args = parts.slice(1).join(' ').toLowerCase().trim();
@@ -562,6 +571,9 @@ function handleTelegramCommand(message) {
       `📋 /track [keyword] — full history of an item\n` +
       `⚠️ /low — all low stock items\n` +
       `📜 /history — last 10 operations\n` +
+      `📍 /location [name] — all items at a location\n` +  // 👈
+      `👤 /user [name] — all operations by a user\n` +      // 👈
+      `📅 /today — today's operations\n` +                  // 👈
       `📊 /summary — inventory overview`;
 
   } else if (command === '/stock') {
@@ -580,12 +592,14 @@ function handleTelegramCommand(message) {
         replyText = `🔍 No items found for: <b>${args}</b>`;
       } else {
         replyText = `🔍 Results for: <b>${args}</b>\n\n`;
-        found.forEach(r => {
+        found.slice(0, 30).forEach(r => {
           const qty = Number(r[4]);
           const qtyEmoji = qty <= 1 ? '🔴' : qty <= 3 ? '🟡' : '🟢';
-          replyText += `${qtyEmoji} <b>${r[2]}</b> [${r[1]}]\n`;
-          replyText += `   📍 ${r[5]} — Qty: <b>${qty}</b>\n\n`;
+          replyText += `${qtyEmoji} <b>${r[2]}</b> [${r[1]}] — <b>${qty}</b>\n`;
         });
+        if (found.length > 30) {
+          replyText += `\n... and ${found.length - 30} more items`;
+        }
       }
     }
 
@@ -660,6 +674,98 @@ function handleTelegramCommand(message) {
           replyText += `\n... and ${found.length - 20} more records`;
         }
       }
+    }  
+
+  } else if (command === '/location') {
+    // კონკრეტული ლოკაციის მთლიანი მარაგი
+    if (!args) {
+      replyText = '❌ Please provide a location.\nExample: /location IT Warehouse';
+    } else {
+      const db = SpreadsheetApp.getActive().getSheetByName(DB_SHEET);
+      const rows = db.getDataRange().getValues().slice(1);
+
+      const found = rows.filter(r =>
+        String(r[5]).toLowerCase().includes(args)
+      );
+
+      if (found.length === 0) {
+        replyText = `🔍 No items found at: <b>${args}</b>`;
+      } else {
+        const totalQty = found.reduce((sum, r) => {
+          const qty = parseFloat(r[4]);
+          return sum + (isNaN(qty) ? 0 : qty);
+        }, 0);
+
+        replyText = `📍 <b>Location: "${args}"</b>\n`;
+        replyText += `📦 ${found.length} items | Total qty: <b>${totalQty}</b>\n\n`;
+
+        found.forEach(r => {
+          const qty = Number(r[4]);
+          const qtyEmoji = qty <= 1 ? '🔴' : qty <= 3 ? '🟡' : '🟢';
+          replyText += `${qtyEmoji} <b>${r[2]}</b> [${r[1]}] — <b>${qty}</b>\n`;
+        });
+      }
+    }
+
+  } else if (command === '/user') {
+    // ვინმეს ყველა ოპერაცია
+    if (!args) {
+      replyText = '❌ Please provide a username.\nExample: /user giorgi';
+    } else {
+      const sheet = SpreadsheetApp.getActive().getSheetByName(HISTORY_SHEET);
+      const rows = sheet.getDataRange().getValues().slice(1);
+
+      const found = rows.filter(r =>
+        String(r[7]).toLowerCase().includes(args)
+      );
+
+      if (found.length === 0) {
+        replyText = `🔍 No operations found for user: <b>${args}</b>`;
+      } else {
+        replyText = `👤 <b>User: "${args}"</b> (${found.length} operations)\n\n`;
+
+        [...found].reverse().slice(0, 20).forEach(r => {
+          const date = Utilities.formatDate(new Date(r[0]), Session.getScriptTimeZone(), "MMM dd, HH:mm");
+          const emoji = { ADD: '➕', TRANSFER: '🔄', ISSUE: '📤', 'WRITE-OFF': '🗑️', RESTOCK: '📥', UPDATE: '✏️', DELETE: '❌' };
+          replyText += `${emoji[r[3]] || '📋'} <b>${r[3]}</b> — ${date}\n`;
+          replyText += `  📦 ${r[2]} [${r[1]}] — Qty: ${r[6]}\n\n`;
+        });
+
+        if (found.length > 20) {
+          replyText += `... and ${found.length - 20} more operations`;
+        }
+      }
+    }
+
+  } else if (command === '/today') {
+    // დღევანდელი ყველა ოპერაცია
+    const sheet = SpreadsheetApp.getActive().getSheetByName(HISTORY_SHEET);
+    const rows = sheet.getDataRange().getValues().slice(1);
+
+    const tz = Session.getScriptTimeZone();
+    const todayStr = Utilities.formatDate(new Date(), tz, "yyyy-MM-dd");
+
+    const found = rows.filter(r => {
+      if (!r[0]) return false;
+      const rowDate = Utilities.formatDate(new Date(r[0]), tz, "yyyy-MM-dd");
+      return rowDate === todayStr;
+    });
+
+    if (found.length === 0) {
+      replyText = '📭 No operations today yet.';
+    } else {
+      replyText = `📅 <b>Today's Operations</b> (${found.length} total)\n\n`;
+
+      [...found].reverse().slice(0, 20).forEach(r => {
+        const date = Utilities.formatDate(new Date(r[0]), tz, "HH:mm");
+        const emoji = { ADD: '➕', TRANSFER: '🔄', ISSUE: '📤', 'WRITE-OFF': '🗑️', RESTOCK: '📥', UPDATE: '✏️', DELETE: '❌' };
+        replyText += `${emoji[r[3]] || '📋'} <b>${r[3]}</b> — ${date}\n`;
+        replyText += `  📦 ${r[2]} [${r[1]}]\n`;
+        replyText += `  👤 ${r[7]} | Qty: ${r[6]}\n\n`;
+        if (found.length > 20) {
+          replyText += `... and ${found.length - 20} more operations`;
+        }
+      });
     }  
 
   } else if (command === '/summary') {
