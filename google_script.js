@@ -175,7 +175,7 @@ function addNewItem(data) {
       `📦 <b>${data.name}</b> [${newId}]\n` +
       `📍 Location: ${data.location}\n` +
       `🔢 Quantity: ${data.qty}\n` +
-      `👤 By: ${data.resp || 'UNKNOWN'}` +
+      `👤 By: ${data.resp || 'UNKNOWN'}\n` +
       `📝 Note: ${data.notes || '-'}`
     );
     return { success: true, message: "ნივთი წარმატებით დაემატა: " + newId };
@@ -234,7 +234,7 @@ function transferItem(data) {
         `📦 <b>${itemName}</b> [${itemId}]\n` +
         `📍 Location: ${fromLoc}\n` +
         `📝 Note: ${note || '-'}\n` +
-        `👤 By: ${resp}` +
+        `👤 By: ${resp}\n` +
         `📝 Note: ${data.notes || '-'}`
       );
       return { success: true, message: `✅ ნივთის ინფორმაცია განახლდა!` };
@@ -251,7 +251,7 @@ function transferItem(data) {
         `📦 <b>${itemName}</b> [${itemId}]\n` +
         `📍 Location: ${fromLoc}\n` +
         `🔢 Added: ${qty} (Total: ${currentQty + qty})\n` +
-        `👤 By: ${resp}` +
+        `👤 By: ${resp}\n` +
         `📝 Note: ${data.notes || '-'}`
       );
       return { success: true, message: `✅ მარაგი წარმატებით შეივსო (${qty} ცალი)!` };
@@ -291,7 +291,7 @@ function transferItem(data) {
       `📦 <b>${itemName}</b> [${itemId}]\n` +
       `📍 ${fromLoc}${action === 'TRANSFER' ? ` ➔ ${toLoc}` : ''}\n` +
       `🔢 Quantity: ${qty}\n` +
-      `👤 By: ${resp}` +
+      `👤 By: ${resp}\n` +
       `📝 Note: ${data.notes || '-'}`
     );
     return { success: true, message: `✅ ოპერაცია (${action}) წარმატებით შესრულდა!` };
@@ -457,7 +457,7 @@ function editExistingItem(data) {
       `📦 <b>${data.name}</b> [${itemId}]\n` +
       `📍 Location: ${data.location}\n` +
       `🔢 Quantity: ${data.qty}\n` +
-      `👤 By: ${data.resp || 'UNKNOWN'}` +
+      `👤 By: ${data.resp || 'UNKNOWN'}\n` +
       `📝 Note: ${data.notes || '-'}`
     );
     return { success: true, message: `✅ რიგი განახლდა: ${itemId}` };
@@ -507,7 +507,8 @@ function deleteItemDirectly(data) {
       `🗑️ <b>ITEM DELETED</b>\n` +
       `📦 <b>${itemName}</b> [${itemId}]\n` +
       `📍 Was at: ${location}\n` +
-      `👤 By: ${data.resp || 'UNKNOWN'}`
+      `👤 By: ${data.resp || 'UNKNOWN'}\n` +
+      `📝 Note: ${ data.notes || '-' }`
     );
     return { success: true, message: `🗑️ რიგი წაიშალა: ${itemId}` };
   } catch (error) {
