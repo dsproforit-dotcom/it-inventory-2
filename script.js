@@ -194,6 +194,7 @@ function displayResults(results) {
 
     // ვქმნით ღილაკს, რომელიც ინდექსს გადასცემს ფუნქციას და არა მთლიან ტექსტს
     html += `<tr>
+      <td data-label="Select"><input type="checkbox" class="row-select" value="${index}" style="width:16px; height:16px;"></td>
       <td data-label="ID"><strong>${escapeHtml(row[1])}</strong></td>
       <td data-label="Name">${escapeHtml(row[2])}</td>
       <td data-label="Category">${escapeHtml(row[3])}</td>
@@ -611,6 +612,93 @@ function printQR() {
       ${qrHtml}
       <script>window.onload = function() { window.print(); window.close(); }<\/script>
     </body></html>
+  `);
+  printWindow.document.close();
+}
+
+// =========================================================
+// ✅ SELECT ALL & QR PRINT SHEET
+// =========================================================
+function toggleSelectAll(masterCheckbox) {
+  // ყველა checkbox-ის მონიშვნა/მოხსნა
+  document.querySelectorAll('.row-select').forEach(cb => {
+    cb.checked = masterCheckbox.checked;
+  });
+}
+
+function printSelectedQR() {
+  // მონიშნული ნივთების შეგროვება
+  const selected = [];
+  document.querySelectorAll('.row-select:checked').forEach(cb => {
+    const index = parseInt(cb.value);
+    const row = currentResults[index];
+    selected.push({ id: row[1], name: row[2] });
+  });
+
+  if (selected.length === 0) {
+    alert('Please select at least one item!');
+    return;
+  }
+
+  if (selected.length > 36) {
+    alert(`Too many items selected (${selected.length}). Please select max 36.`);
+    return;
+  }
+
+  // ბეჭდვის ფანჯრის HTML
+  const printWindow = window.open('', '_blank');
+
+  // თითოეული ნივთისთვის QR div-ი
+  const itemDivs = selected.map(item => `
+    <div class="qr-item">
+      <div id="qr-${item.id.replace(/[^a-zA-Z0-9]/g, '_')}"></div>
+      <div class="qr-label">
+        <strong>${item.name}</strong>
+        <span>${item.id}</span>
+      </div>
+    </div>
+  `).join('');
+
+  // QR გენერირების script
+  const qrScripts = selected.map(item => {
+    const safeId = item.id.replace(/[^a-zA-Z0-9]/g, '_');
+    return `new QRCode(document.getElementById('qr-${safeId}'), {
+      text: '${item.id}',
+      width: 100,
+      height: 100,
+      colorDark: '#000000',
+      colorLight: '#ffffff'
+    });`;
+  }).join('\n');
+
+  printWindow.document.write(`
+    <html>
+    <head>
+      <title>QR Sheet</title>
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
+      <style>
+        body { margin: 10px; font-family: 'Segoe UI', sans-serif; }
+        .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .qr-item { border: 1px dashed #ccc; border-radius: 6px; padding: 8px; text-align: center; display: flex; flex-direction: column; align-items: center; }
+        .qr-label { margin-top: 5px; }
+        .qr-label strong { display: block; font-size: 11px; max-width: 110px; word-break: break-word; }
+        .qr-label span { font-size: 10px; color: #666; }
+        @media print {
+          body { margin: 0; }
+          .grid { gap: 5px; }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="grid">${itemDivs}</div>
+      <script>
+        window.onload = function() {
+          ${qrScripts}
+          setTimeout(function() { window.print(); }, 800);
+        };
+      <\/script>
+    </body>
+    </html>
   `);
   printWindow.document.close();
 }

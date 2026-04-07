@@ -684,3 +684,17 @@ html:has(body.dark-mode) {
     border-color: #333;
   }
 }
+
+
+
+
+/* Checkbox-ების დიზაინი */
+input[type="checkbox"].row-select,
+input[type="checkbox"]#selectAll {
+  cursor: pointer;
+  accent-color: #1a73e8;
+  /* მონიშვნისას ექნება შენი პროექტის მთავარი ლურჯი ფერი */
+  transform: scale(1.2);
+  /* ოდნავ გავადიდოთ, რომ მარტივი იყოს დაკლიკება */
+  margin: 0;
+}

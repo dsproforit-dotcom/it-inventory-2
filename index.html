@@ -104,6 +104,7 @@
         <button onclick="search()" class="btn-search">🔍 Filter</button>
         <button onclick="clearFilters()" class="btn-clear">🗑️ Clear</button>
         <button onclick="downloadCSV()" style="background: #00796b;">📥 CSV Export</button>
+        <button onclick="printSelectedQR()" style="background: #6f42c1;">🔳 Print QR</button>
       </div>
       <div class="button-group">
         <button onclick="openModal()" class="btn-add">➕ Add Item</button>
@@ -117,6 +118,7 @@
       <table>
         <thead id="tableHead">
           <tr>
+            <th><input type="checkbox" id="selectAll" onclick="toggleSelectAll(this)" style="width:16px; height:16px;"></th>
             <th>ID</th>
             <th onclick="sortTable(2)" style="cursor:pointer">Name ↕️</th>
             <th onclick="sortTable(3)" style="cursor:pointer">Category ↕️</th>
