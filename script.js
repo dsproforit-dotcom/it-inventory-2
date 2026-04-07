@@ -204,6 +204,7 @@ function displayResults(results) {
       <td data-label="Note">${escapeHtml(row[8]) || '-'}</td>
       <td data-label="Action" style="display:flex; gap:5px;">
         <button class="copy-btn" onclick="copyId('${escapeHtml(row[1])}', this)" style="flex:1;">📋</button>
+        <button class="copy-btn" onclick="openQrModal(${index})" style="flex:1; background:#6f42c1; color:white; border-color:#6f42c1;">🔳</button>
         <button class="copy-btn" onclick="openEditModalByIndex(${index})" style="flex:1; background:#007bff; color:white; border-color:#007bff;">✏️</button>
       </td>
     </tr>`;
@@ -410,6 +411,7 @@ window.addEventListener('click', function (event) {
   if (event.target === document.getElementById('addModal')) closeModal();
   if (event.target === document.getElementById('transferModal')) closeTransferModal();
   if (event.target === document.getElementById('editModal')) closeEditModal();
+  if (event.target === document.getElementById('qrModal')) closeQrModal();
 });
 
 function displayError(e) { document.getElementById('message').innerText = '❌ Error: ' + e.message; document.getElementById('message').className = 'message error'; document.getElementById('message').style.display = 'block'; }
@@ -554,6 +556,63 @@ function toggleTheme() {
     btn.innerText = '🌙'; // მთვარის იკონკა ჩასართავად
   }
 }
+
+// =========================================================
+// 🔳 QR CODE MODAL
+// =========================================================
+function openQrModal(index) {
+  const row = currentResults[index];
+  const itemId = row[1];
+  const itemName = row[2];
+
+  document.getElementById('qrItemName').innerText = itemName;
+  document.getElementById('qrItemId').innerText = itemId;
+
+  // ძველი QR-ის გასუფთავება
+  const qrDiv = document.getElementById('qrcode');
+  qrDiv.innerHTML = '';
+
+  // ახალი QR-ის გენერირება
+  new QRCode(qrDiv, {
+    text: itemId,
+    width: 200,
+    height: 200,
+    colorDark: '#000000',
+    colorLight: '#ffffff',
+  });
+
+  document.getElementById('qrModal').style.display = 'block';
+}
+
+function closeQrModal() {
+  document.getElementById('qrModal').style.display = 'none';
+  document.getElementById('qrcode').innerHTML = '';
+}
+
+function printQR() {
+  const itemName = document.getElementById('qrItemName').innerText;
+  const itemId = document.getElementById('qrItemId').innerText;
+  const qrHtml = document.getElementById('qrcode').innerHTML;
+
+  // ბეჭდვის ფანჯარა
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <html><head><title>QR - ${itemId}</title>
+    <style>
+      body { font-family: 'Segoe UI', sans-serif; text-align: center; padding: 40px; }
+      h2 { margin-bottom: 5px; }
+      p { color: #666; margin-top: 0; }
+    </style></head>
+    <body>
+      <h2>${itemName}</h2>
+      <p>${itemId}</p>
+      ${qrHtml}
+      <script>window.onload = function() { window.print(); window.close(); }<\/script>
+    </body></html>
+  `);
+  printWindow.document.close();
+}
+
 
 function escapeHtml(text) {
   if (text === null || text === undefined) return '';
