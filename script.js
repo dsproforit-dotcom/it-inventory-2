@@ -204,9 +204,9 @@ function displayResults(results) {
       <td data-label="Note">${escapeHtml(row[8]) || '-'}</td>
       <td data-label="Action">
         <div style="display:flex; gap:4px;">
-          <button class="copy-btn" onclick="copyId('${escapeHtml(row[1])}', this)" style="padding:6px 8px; min-width:unset; font-size:14px;">📋</button>
-          <button class="copy-btn" onclick="openQrModal(${index})" style="padding:6px 8px; min-width:unset; font-size:14px; background:#6f42c1; color:white; border-color:#6f42c1;">🔳</button>
-          <button class="copy-btn" onclick="openEditModalByIndex(${index})" style="padding:6px 8px; min-width:unset; font-size:14px; background:#007bff; color:white; border-color:#007bff;">✏️</button>
+          <button class="copy-btn" onclick="copyId('${escapeHtml(row[1])}', this)" style="padding:6px 16px; min-width:unset; font-size:16px;">📋</button>
+          <button class="copy-btn" onclick="openQrModal(${index})" style="padding:6px 16px; min-width:unset; font-size:16px; background:#6f42c1; color:white; border-color:#6f42c1;">🔳</button>
+          <button class="copy-btn" onclick="openEditModalByIndex(${index})" style="padding:6px 16px; min-width:unset; font-size:16px; background:#007bff; color:white; border-color:#007bff;">✏️</button>
         </div>
       </td>
     </tr>`;

@@ -139,7 +139,7 @@ function addNewItem(data) {
 
     // თუ ველი ცარიელია, ვაგენერირებთ ავტომატურად
     if (!newId || newId.trim() === "") {
-      newId = 'ITM-' + Utilities.getUuid().split('-')[0].toUpperCase();
+      newId = Utilities.getUuid().split('-')[0].toUpperCase();
     } else {
       // თუ ხელით ჩაწერეს, ვამოწმებთ ხომ არ არსებობს უკვე ბაზაში
       const existingIds = dbSheet.getRange("B:B").getValues().flat();
