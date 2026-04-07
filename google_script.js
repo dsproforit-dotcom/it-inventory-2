@@ -234,8 +234,7 @@ function transferItem(data) {
         `📦 <b>${itemName}</b> [${itemId}]\n` +
         `📍 Location: ${fromLoc}\n` +
         `📝 Note: ${note || '-'}\n` +
-        `👤 By: ${resp}\n` +
-        `📝 Note: ${data.notes || '-'}`
+        `👤 By: ${resp}`         
       );
       return { success: true, message: `✅ ნივთის ინფორმაცია განახლდა!` };
     }
@@ -252,7 +251,7 @@ function transferItem(data) {
         `📍 Location: ${fromLoc}\n` +
         `🔢 Added: ${qty} (Total: ${currentQty + qty})\n` +
         `👤 By: ${resp}\n` +
-        `📝 Note: ${data.notes || '-'}`
+        `📝 Note: ${data.note || '-'}`
       );
       return { success: true, message: `✅ მარაგი წარმატებით შეივსო (${qty} ცალი)!` };
     }
@@ -292,7 +291,7 @@ function transferItem(data) {
       `📍 ${fromLoc}${action === 'TRANSFER' ? ` ➔ ${toLoc}` : ''}\n` +
       `🔢 Quantity: ${qty}\n` +
       `👤 By: ${resp}\n` +
-      `📝 Note: ${data.notes || '-'}`
+      `📝 Note: ${data.note || '-'}`
     );
     return { success: true, message: `✅ ოპერაცია (${action}) წარმატებით შესრულდა!` };
 
