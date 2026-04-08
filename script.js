@@ -430,8 +430,15 @@ function sortTable(columnIndex) {
 
 function downloadCSV() {
   if (!currentResults || currentResults.length === 0) return alert("No data to export!");
+
+  // მონიშნულები თუ არსებობს - მხოლოდ ისინი, თუ არა - ყველა
+  const checked = [...document.querySelectorAll('.row-select:checked')];
+  const dataToExport = checked.length > 0
+    ? checked.map(cb => currentResults[parseInt(cb.value)])
+    : currentResults;
+
   let csvContent = "\ufeffDate,ID,Name,Category,Qty,Location,Warranty,Photo_URL,Note\n";
-  currentResults.forEach(row => { let cleanRow = row.map(cell => `"${String(cell).replace(/"/g, '""')}"`); csvContent += cleanRow.join(",") + "\n"; });
+  dataToExport.forEach(row => { let cleanRow = row.map(cell => `"${String(cell).replace(/"/g, '""')}"`); csvContent += cleanRow.join(",") + "\n"; });
   const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' }); const url = URL.createObjectURL(blob); const link = document.createElement("a");
   link.setAttribute("href", url); link.setAttribute("download", `Inventory_Export_${new Date().toISOString().split('T')[0]}.csv`); document.body.appendChild(link); link.click(); document.body.removeChild(link);
 }
